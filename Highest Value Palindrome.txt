@@ -1,0 +1,87 @@
+function MaximizeResult(firstHalf,secondHalf,changed,tries) {
+    for(var i = 0; i < firstHalf.length; i++){
+           if(tries !== 0) {
+               if(changed[i] === true && firstHalf[i] !== '9'){ //see if we can change a number we changed already to 9
+                   firstHalf[i] = '9';
+                   secondHalf[i] = firstHalf[i]
+                   tries--;
+               }
+               if(tries >= 2 && firstHalf[i] !== '9') {//if we have two tries left, changes both numbers to 9 if they are not already
+                   firstHalf[i] = '9';
+                   secondHalf[i] = firstHalf[i]
+                   tries -= 2;
+               }
+            }
+            else {
+                break;
+            }
+    }
+    return tries;
+}
+function processData(input) {
+    var inputs = input.split(/\s+/);
+    var length = inputs[0];
+    var tries = parseInt(inputs[1]);
+    var number =  inputs[2];
+    if(length == 0) {
+        console.log(-1);
+        return;
+    }
+    var isEven = number.length % 2 === 0;
+    
+    
+    var firstHalf = number.substring(0,Math.floor(number.length/2)).split(""); //get the first half
+    var secondHalf = number.substring(Math.ceil(number.length/2)).split("").reverse(); //get the second half, reverse it
+    var changed =  new Array(secondHalf.length).fill(false);
+       
+    for(var i = 0; i < firstHalf.length; i++){ //change to a palindrome
+        if(firstHalf[i]!== secondHalf[i]){
+            if(tries !== 0) { //change the second half to match the first half's number
+                if(secondHalf[i] < firstHalf[i]){
+                secondHalf[i] = firstHalf[i]
+                changed[i] = true;
+                tries--;
+                }
+                else{
+                firstHalf[i] = secondHalf[i];
+                changed[i] = true;
+                tries--;
+                }
+            }
+            else {
+                break;
+            }
+        }
+    }
+    
+    tries = MaximizeResult(firstHalf,secondHalf,changed,tries); //maximize result
+    
+    if(!isEven) {
+        var middleNumber = number.charAt(Math.floor(number.length/2));
+        if(tries !== 0){ //change middle number to 9 if we have tries left over
+            middleNumber = 9;
+        }
+        firstHalf.push(middleNumber);
+    }
+    var result = firstHalf.concat(secondHalf.reverse()).join('');
+
+    if(result=== result.split('').reverse().join('')){
+        console.log(result);
+    }
+    else {
+        console.log(-1);
+    }
+} 
+
+
+
+process.stdin.resume();
+process.stdin.setEncoding("ascii");
+_input = "";
+process.stdin.on("data", function (input) {
+    _input += input;
+});
+
+process.stdin.on("end", function () {
+   processData(_input);
+});

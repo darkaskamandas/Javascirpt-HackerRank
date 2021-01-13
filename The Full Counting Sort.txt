@@ -1,0 +1,75 @@
+function processData(input) {
+   var lengthRegEx = /\d+/;
+   var regEx = /\d\d? \w+/g;
+    var stringRegEx = /[A-Za-z]+/;
+    var poop = lengthRegEx.exec(input);
+   
+   var countArray = []
+   for(var i = 0; i <100; i++){
+        countArray.push(0);
+    }
+   for(var i = 0; i <poop[0]; i++){
+       countArray[lengthRegEx.exec(regEx.exec(input)[0])[0]]++;
+    }
+   for(var i = 1; i <100; i++){
+        countArray[i]+=countArray[i-1];
+   }
+    regEx.lastIndex = 0;
+    var ansArray = [];
+    var num = 0;
+   for(var i = 0; i< poop[0]; i++){
+       var value = regEx.exec(input)[0]
+       var number = lengthRegEx.exec(value)[0];
+       var string = stringRegEx.exec(value)[0];
+       if(number == 0){
+           if(i>=poop[0]/2)
+                ansArray[num] = string;
+           else
+               ansArray[num] = '-';
+           num++;
+       }
+       else{
+           if(i>=poop[0]/2)
+            ansArray[countArray[number-1]] = string;
+           else{
+               ansArray[countArray[number-1]] = '-';
+           }
+           countArray[number-1]++;
+       }
+   }
+   printArray(ansArray);
+}
+function printArray(array){
+     process.stdout.write(array.join(" "));
+}
+function Value(num, string){
+    this.num = num;
+    this.string = string;
+}
+function parseString(string){
+    var num = 0;
+    var str = ""
+    if(string.charAt(1) = ' '){
+        num = parseInt(string.charAt(0));
+        for(var i =1; i<str.length; i++ ){
+            str+=string.charAt(i)
+        }
+    }else{
+        num  = parseInt(string.charAt(0)+string.charAt(1));
+        for(var i =2; i<str.length; i++ ){
+            str+=string.charAt(i)
+        }
+    }
+    return new Value(num, str);
+}
+
+process.stdin.resume();
+process.stdin.setEncoding("ascii");
+_input = "";
+process.stdin.on("data", function (input) {
+    _input += input;
+});
+
+process.stdin.on("end", function () {
+   processData(_input);
+});

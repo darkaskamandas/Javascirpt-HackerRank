@@ -1,0 +1,33 @@
+function processData(input) {
+    // Define variables
+    var inputs = input.split("\n"),
+        noCandles = Number(inputs[0]),
+        arrCandles = inputs[1].split(" ").map(Number),
+        greatestHeight = 0,
+        numCoincidences = 0;
+    // Run over array to get highest candles
+    for(var i = 0; i < noCandles; i++) {
+        if( greatestHeight < arrCandles[i] ){
+            greatestHeight = arrCandles[i];
+            numCoincidences = 1;
+        }
+        else {
+            if(greatestHeight == arrCandles[i])
+                numCoincidences += 1;
+        }
+        
+    }
+    // Print answer
+    console.log(numCoincidences);
+} 
+
+process.stdin.resume();
+process.stdin.setEncoding("ascii");
+_input = "";
+process.stdin.on("data", function (input) {
+    _input += input;
+});
+
+process.stdin.on("end", function () {
+   processData(_input);
+});

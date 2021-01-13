@@ -1,0 +1,32 @@
+function processData(input) {
+  var i, j, k;
+  var chain = [];
+    
+  for (i = 1; i <= input; i += 1) {
+      currentStr = "";
+      for (j = 0; j < input - i; j += 1) {
+          currentStr += " "
+      }
+      
+      for (k = 0; k < i; k += 1) {
+          currentStr += "#";    
+      }
+      chain.push(currentStr);   
+  }
+    
+  
+  var finalChain = chain.join("\n");
+    
+  console.log(finalChain);
+}
+
+process.stdin.resume();
+process.stdin.setEncoding("ascii");
+_input = "";
+process.stdin.on("data", function (input) {
+    _input += input;
+});
+
+process.stdin.on("end", function () {
+   processData(_input);
+});

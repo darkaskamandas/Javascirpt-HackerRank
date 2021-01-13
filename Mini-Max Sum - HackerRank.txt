@@ -1,0 +1,24 @@
+function processData(input) {
+    var numbers = input.split(" ").map(val=>parseInt(val));
+    var max = 0;
+    var min = Number.MAX_VALUE;
+    numbers.forEach(function(value) {
+        var clone = numbers.slice(0);
+        clone.splice(clone.indexOf(value), 1);
+        var sum = clone.reduce((a, b) => a + b, 0);
+        max = Math.max(max,sum);
+        min = Math.min(min,sum);
+    });
+    console.log(min+' '+max);
+} 
+
+process.stdin.resume();
+process.stdin.setEncoding("ascii");
+_input = "";
+process.stdin.on("data", function (input) {
+    _input += input;
+});
+
+process.stdin.on("end", function () {
+   processData(_input);
+});
