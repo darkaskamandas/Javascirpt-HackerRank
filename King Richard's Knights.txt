@@ -1,0 +1,170 @@
+'use strict';
+
+const fs = require('fs');
+
+process.stdin.resume();
+process.stdin.setEncoding('utf-8');
+
+let inputString = '';
+let currentLine = 0;
+
+process.stdin.on('data', inputStdin => {
+  inputString += inputStdin;
+});
+
+process.stdin.on('end', _ => {
+  inputString = inputString.trim().split('\n').map(str => str.trim());
+
+  main();
+});
+
+function readLine() {
+  return inputString[currentLine++];
+}
+
+function updateKnightById (id, r, c, knights) {
+  knights[id] = [r, c];
+  return knights;
+}
+
+function getKnightIdByPosition (r, c, knights) {
+  for (let i = 0; i < knights.length; i++) {
+    if (knights[i][0] === r && knights[i][1] === c)
+      return i;
+  }
+  throw new Error(`Couldn't find knight at ${r} ${c}`);
+}
+
+function setupKnights (n) {
+  const knights = [];
+  for (let i = 0; i < n; i++) {
+    knights[i] = [Math.floor(i / 5), i % 5];
+  }
+  return knights;
+}
+
+function main() {
+  const ws = fs.createWriteStream(process.env.OUTPUT_PATH);
+
+  // width of the grid
+  const n = parseInt(readLine(), 10);
+
+  // number of drills
+  const s = parseInt(readLine(), 10);
+
+  // [[row, column, size], ...]
+  let commands = Array(s);
+
+  for (let commandsRowItr = 0; commandsRowItr < s; commandsRowItr++) {
+    commands[commandsRowItr] = readLine().split(' ').map(commandsTemp => parseInt(commandsTemp, 10));
+  }
+
+  // [[x, y], ...]
+  const knights = kingRichardKnights(
+    n,
+    s, commands
+  );
+  // printKnights(knights);
+
+  // number of tests
+  const t = parseInt(readLine(), 10);
+
+  for (let itest = 0; itest < t; itest++) {
+    const id = parseInt(readLine(), 10);
+    const knight = knights[id].map(i => i + 1);
+    ws.write(knight.join(' ') + "\n");
+  }
+
+  ws.end();
+}
+
+
+
+
+function printTestResult (id, knights) {
+  return knights[id].map(i => i + 1).join(' ');
+}
+
+
+function updateKnightById (id, r, c, knights) {
+  knights[id] = [r, c];
+  return knights;
+}
+
+function getKnightIdByPosition (r, c, knights) {
+  for (let i = 0; i < knights.length; i++) {
+    if (knights[i][0] === r && knights[i][1] === c)
+      return i;
+  }
+  return null;
+  // throw new Error(`Couldn't find knight at ${r} ${c}`);
+}
+
+function setupKnights (n) {
+  const knights = [];
+  knights.width = n;
+  const total = Math.pow(n, 2);
+  for (let i = 0; i < total; i++) {
+    knights[i] = [Math.floor(i / n), i % n];
+  }
+  return knights;
+}
+
+function knightIdsInGrid (row, col, size, knights) {
+  const result = [];
+  for (let r = row; r < row + size; r++) {
+    for (let c = col; c < col + size; c++) {
+      result.push(
+        getKnightIdByPosition(r, c, knights)
+      )
+    }
+  }
+  return result;
+}
+
+function kingRichardKnights(
+  n,
+  c, _commands
+) {
+  const knights = setupKnights(n);
+  // printKnights(knights);
+
+  // console.log('executing cmds');
+  const commands = _commands.map(
+    ([r, c, w]) => [r - 1, c - 1, w + 1]
+  );
+
+  // console.log({
+  //   n,
+  //   c, _commands
+  // })
+
+  // console.log(commands);
+  return commands.reduce(
+    (knights, command) => rotateKnights(...command, knights),
+    knights
+  );
+}
+
+function rotateKnights (row, col, size, knights) {
+  const grid = knightIdsInGrid(row, col, size, knights);
+  // console.log('to rotate:', grid);
+  for (let i = 0; i < grid.length; i++) {
+    rotateKnight(row, col, size, grid[i], knights);
+  }
+  return knights;
+}
+
+function rotateKnight (rowStart, colStart, size, id, knights) {
+  const [knightRow, knightCol] = knights[id];
+  // console.log(id, knightRow, knightCol);
+  const row = knightRow - rowStart;
+  const col = knightCol - colStart;
+  const r1 = col + rowStart;
+  const c1 = size - 1 - row + colStart;
+  // const r1 = size - 1 - col + rowStart;
+  // const c1 = row + colStart;
+  return updateKnightById (id, r1, c1, knights);
+}
+
+
