@@ -1,0 +1,49 @@
+function processData(input) {
+    var lines = input.split('\n');
+    var tests = parseInt(lines.shift());
+    for (var i = 0; i < tests; i++) {
+        var parts = lines[i].split(' ');
+        var n = parseInt(parts[0]);
+        var edges = parseInt(parts[1]);
+        if (n <= 1) {
+            console.log(n);
+            continue;
+        }
+        if (edges <= 1) {
+            console.log(edges + 1);
+            continue;
+        }
+        if (edges === 2) {
+            console.log(edges);
+            continue;
+        }
+        var start = 1;
+        var end = n;
+        while (end - start > 1) {
+            var r = Math.floor((end + start) / 2);
+            var subsetSize = Math.floor(n / r);
+            var rest = n % r;
+            var maxEdges = (r - 1) * subsetSize * n / 2;
+            maxEdges += (r - 1) * subsetSize * rest / 2; /* new vertices to all existing */
+            maxEdges += rest * (rest - 1) / 2; /* complete graph between them */
+//            console.log('r', r, 'n', n, 'maxEdges',maxEdges);
+            if (maxEdges < edges) {
+                start = r;
+            } else {
+                end = r;
+            }
+        }
+        console.log(start + 1);
+    }
+} 
+
+process.stdin.resume();
+process.stdin.setEncoding("ascii");
+_input = "";
+process.stdin.on("data", function (input) {
+    _input += input;
+});
+
+process.stdin.on("end", function () {
+   processData(_input);
+});

@@ -1,0 +1,117 @@
+function createQueue() {
+    var array = [];
+    var head = 0;
+    return {
+        enqueue: function(o) {
+            array.push(o);
+        },
+        dequeue: function(o) {
+            if (head >= array.length) {
+                return null;
+            }
+            return array[head++];
+        },
+        hasMore: function() {
+            return head < array.length;
+        }
+    }
+}
+
+function isDefined(o) {
+    return o === undefined || o === null;
+}
+
+function initGraph(n) {
+    var nodes = [];
+    while (--n >= 0) {
+        nodes[n] = {
+            id: n + 1,
+            connections: [],
+        }
+    }
+    return nodes;
+}
+
+function recordEdge(nodes, first, second, fare) {
+    if (first == second) {
+       return; // ignore edge to itself
+    }
+    nodes[first].connections.push({
+        node: nodes[second],
+        fare: fare
+    });
+    nodes[second].connections.push({
+        node: nodes[first],
+        fare: fare
+    });
+}
+
+function findCheapestPath(nodes, start, end) {
+    var startNode = nodes[start];
+    startNode.cost = 0;
+    var queue = createQueue();
+    queue.enqueue(startNode);
+    
+    while (queue.hasMore()) {
+        var next = queue.dequeue();
+        next.connections.forEach(function(connection) {
+            var actualFare = connection.fare - next.cost;
+            if (actualFare < 0) { actualFare = 0; }
+            var costToReach = next.cost + actualFare;
+            // short circuit in case this costToReach is already larger than the current node
+            if (isDefined(nodes[end].cost) && nodes[end].cost <= costToReach) {
+                return;
+            }
+            if (isDefined(connection.node.cost) || connection.node.cost > costToReach) {
+//                console.error('Node ' + connection.node.id + ': ' + costToReach + ' (from ' + next.id + ', fare: ' + connection.fare + ', actualFare: ' + actualFare + ', running cost: ' + next.cost + ')');
+                connection.node.cost = costToReach;
+                queue.enqueue(connection.node);
+            }
+        });
+    }
+
+    if (isDefined(nodes[end].cost)) {
+        console.log('NO PATH EXISTS');
+    } else {
+        console.log(nodes[end].cost);
+    }
+}
+
+function parseLine(line) {
+    var numbers = line.split(' ');
+    return numbers.map(function(numberStr) {
+        return parseInt(numberStr);
+    });
+}
+
+function reader(input) {
+    var nextLine = 0;
+    var lines = input.split('\n');
+    return function() {
+        return lines[nextLine++];
+    };
+}
+
+function processData(input) {
+    var read = reader(input);
+    var graphParams = parseLine(read());
+    var n = graphParams[0];
+    var e = graphParams[1];
+    var nodes = initGraph(n);
+    for (var i = 0; i < e; i++) {
+        var edge = parseLine(read());
+        recordEdge(nodes, edge[0] - 1, edge[1] - 1, edge[2]);
+    }
+    findCheapestPath(nodes, 0, n - 1);
+}
+
+process.stdin.resume();
+process.stdin.setEncoding("ascii");
+_input = "";
+process.stdin.on("data", function (input) {
+    _input += input;
+});
+
+process.stdin.on("end", function () {
+   processData(_input);
+});
