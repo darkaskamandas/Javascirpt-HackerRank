@@ -1,0 +1,120 @@
+function processData(input) {
+    var lines = input.split('\n'),
+        numTC = +lines[0],
+        currLine = 1;
+    for (var i = 0; i < numTC; i++) {
+        var numRows = +lines[currLine].split(' ')[0],
+            rows = lines.slice(++currLine, currLine + numRows),
+            wands = +lines[currLine + numRows];
+        processTC(rows, wands);
+        currLine += numRows + 1;
+    }
+} 
+
+function processTC(lines, wands) {
+    var matrix = [],
+        currentPos = {x: 0, y: 0};
+    
+    for (var i = 0; i < lines.length; i++) {
+        matrix[i] = lines[i].split('');
+        var hermie = lines[i].indexOf('M'),
+            exit = lines[i].indexOf('*');
+        hermie > -1 && (currentPos = {x: hermie, y: i, wand: 0});
+    }
+
+    var queue = [],
+        pastMoves = {};
+        
+    // add the first move
+    queue.push(currentPos);
+    
+    while(queue.length > 0) {
+        var path = queue.pop();
+        if (move(path)) {
+            queue = [];
+            process.stdout.write((wands === path.wand ? 'Impressed' : 'Oops!') + '\n');
+        }
+    }
+    
+    function move(position) {
+        // See if we found it
+        var value = matrix[position.y][position.x];
+        if (value === '*') {
+            return true;
+        }
+        
+        function recordPastMove() {
+            var pastMove = pastMoves[position.y];
+            if (!pastMove) {
+                pastMove = {};
+                pastMoves[position.y] = pastMove;
+            }
+        
+            // Been here done that, quit
+            if (pastMove[position.x]) {
+                return false;
+            }
+            pastMove[position.x] = true;
+            return true;
+        }
+        
+        function isValidMove(newMove) {
+            var value = matrix[newMove.y][newMove.x];
+            return (!pastMoves[newMove.y] || !pastMoves[newMove.y][newMove.x]) && (value === '.' || value === '*');
+        }
+        
+        function determineNewMoves() {
+            var newMoves = [];
+        
+            // Try north
+            if (position.y - 1 > -1 && isValidMove({x: position.x, y: position.y -1})) {
+                newMoves.push({x: position.x, y: position.y -1});
+            }
+        
+            // Try south
+            if (position.y + 1 < matrix.length && isValidMove({x: position.x, y: position.y + 1})) {
+                newMoves.push({x: position.x, y: position.y + 1});
+            }
+        
+            // Try east
+            if (position.x + 1 < matrix[position.y].length && isValidMove({x: position.x + 1, y: position.y})) {
+                newMoves.push({x: position.x + 1, y: position.y});
+            }
+        
+            // Try west
+            if (position.x - 1 > -1 && isValidMove({x: position.x - 1, y: position.y})) {
+                newMoves.push({x: position.x - 1, y: position.y});
+            }
+        
+            // Use the wand
+            var currWand = position.wand;
+            if (newMoves.length > 1) {
+                currWand = position.wand + 1;
+            }
+        
+            newMoves.forEach(function(newMove) {
+                newMove.wand = currWand;
+                queue.push(newMove);
+            });
+            return false;
+        }
+        
+        if (!recordPastMove()) {
+            return false;
+        }
+        
+        return determineNewMoves();
+    }
+}
+
+
+process.stdin.resume();
+process.stdin.setEncoding("ascii");
+_input = "";
+process.stdin.on("data", function (input) {
+    _input += input;
+});
+
+process.stdin.on("end", function () {
+   processData(_input);
+});

@@ -1,0 +1,49 @@
+process.stdin.resume();
+process.stdin.setEncoding('ascii');
+
+var input_stdin = "";
+var input_stdin_array = "";
+var input_currentline = 0;
+
+process.stdin.on('data', function (data) {
+    input_stdin += data;
+});
+
+process.stdin.on('end', function () {
+    input_stdin_array = input_stdin.split("\n");
+    main();    
+});
+
+function readLine() {
+    return input_stdin_array[input_currentline++];
+}
+
+/////////////// ignore above this line ////////////////////
+
+function main() {
+    var n = parseInt(readLine());
+    score = readLine().split(' ');
+    score = score.map(Number);
+    // your code goes here
+    if(n<=1) {
+        console.log('0 0');
+    }
+    else{
+        var bestBroke=0;
+        var worstBroke=0;
+        var best= score[0];
+        var worst= score[0];
+        for(var i=1;i<n;i++){
+            if(best<score[i]){
+                bestBroke++;
+                best=score[i];
+            }
+            if(worst>score[i]){
+                worstBroke++;
+                worst=score[i];
+            }
+        }
+
+        console.log(bestBroke+ ' ' +worstBroke);
+    }
+}

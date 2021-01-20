@@ -1,0 +1,59 @@
+function processData(input) {
+    var i,j;
+    var S1=[];
+    var S2=[];
+    var S3=[];
+    var S4=[];
+    for(i=0;i<26;i++){
+        S1[i]=0;
+        S2[i]=[];
+        S3[i]=[];
+        S4[i]=[];
+        for(j=0;j<26;j++){
+            S2[i][j]=0;
+            S3[i][j]=0;
+            S4[i][j]=0;
+        }
+    }
+    
+    // SOLVE
+    
+    for(i=0;i<input.length;i++){
+        var crt=input.charCodeAt(i)-97;
+        for(j=0;j<26;j++){
+            S4[crt][j]=modSum(S4[crt][j],S3[crt][j]);
+            S3[j][crt]=modSum(S3[j][crt],S2[j][crt]);
+            S2[j][crt]=modSum(S2[j][crt],S1[j]);
+        }
+        S1[crt]++;
+     }
+    
+    var res=0;
+    
+    for(i=0;i<26;i++){
+        for(j=0;j<26;j++){
+            res=modSum(res,S4[i][j]);
+        }
+    }
+    console.log(res);
+
+    function modSum(a,b){
+        var r=a+b;
+        if(r>1000000007){
+            r-=1000000007;
+        }
+        return r;
+    }
+
+} 
+
+process.stdin.resume();
+process.stdin.setEncoding("ascii");
+_input = "";
+process.stdin.on("data", function (input) {
+    _input += input;
+});
+
+process.stdin.on("end", function () {
+   processData(_input);
+});

@@ -1,0 +1,11 @@
+function regexVar() {
+    /*
+     * Declare variable re here
+     */
+    const re = new RegExp("^([aeiou]).+\\1$");
+    
+    /*
+     * Do not remove the return statement
+     */
+    return re;
+}

@@ -1,0 +1,79 @@
+'use strict';
+
+function processData() {
+    let l = _input.trim().split("\n"),
+        n = parseInt(l[0], 10),
+        m = l.slice(1, n + 1),
+        k = l.slice(n + 2).map(Number);
+
+    let subSet   = new Set();
+    let suffixes = [];
+    let lcp      = [];
+    let total    = 1;
+
+    _input = null;
+    l = null;
+    n = null;
+
+    m.forEach(s => {
+        for (var i = 0; i < s.length; i += 1) {
+            subSet.add(s.slice(i));
+        }
+    });
+
+    m = null;
+
+    suffixes = Array.from(subSet).sort();
+
+    // Convert to buffers
+    suffixes.forEach((s, i) => {
+        suffixes[i] = new Buffer(s);
+    });
+
+    subSet = null;
+    lcp = new Array(suffixes.length);
+
+    suffixes.forEach((y, i) => {
+        if (!i) {
+            lcp[i] = 0;
+            total += y.length;
+            return;
+        }
+
+        var x = suffixes[i - 1];
+        for (var j = 0; j < x.length && j < y.length; j += 1) {
+            if (x[j] !== y[j]) {
+                break;
+            }
+        }
+        lcp[i] = j;
+        total += y.length - j;
+    });
+
+    k.forEach(x => {
+        if (x >= total) {
+            return console.log("INVALID");
+        }
+        for (var i = 0, c = x - 1; i < suffixes.length; i += 1) {
+            var s = suffixes[i];
+            var l = s.length - lcp[i];
+
+            c -= l;
+            if (c < 0) {
+                return console.log(s.slice(0, (c + 1) || undefined).toString());
+            }
+        }
+    });
+}
+
+process.stdin.resume();
+process.stdin.setEncoding("ascii");
+
+let _input = "";
+process.stdin.on("data", function (input) {
+    _input += input;
+});
+
+process.stdin.on("end", function () {
+   processData();
+});

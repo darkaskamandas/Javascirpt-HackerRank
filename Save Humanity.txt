@@ -1,0 +1,169 @@
+'use strict';
+
+const
+    K = 1,
+    A = "a".charCodeAt(0),
+    ALPHABET_SIZE = 26;
+
+function getRepeat(v) {
+    const match = (/(?=((.{26})(?:.*?\2)+))/g).exec(v);
+
+    return match && match[2];
+}
+
+function getLCSLoc(lcs, v) {
+    const s = new Set();
+
+    let i = -1;
+
+    while (lcs && (i = v.indexOf(lcs, i + 1)) >= 0) {
+        s.add(i + lcs.length - 1);
+    }
+
+    return s;
+}
+
+function getLCSTable(p, v) {
+    const lcs = getRepeat(v);
+
+    return {
+        l : lcs ? lcs.length : 0,
+        p : getLCSLoc(lcs, p),
+        v : getLCSLoc(lcs, v)
+    };
+}
+
+function getSkip(b) {
+    const m = new Array(b.length);
+
+    for (let i = 0, c, x, y; i < m.length; i += 1) {
+        c = b[i];
+
+        if (c === x) {
+            m[i] = ++y;
+        } else {
+            x = c;
+            y = 1;
+            m[i] = y;
+        }
+    }
+
+    return m;
+}
+
+function getDK(v, vl) {
+    const
+        dk    = new Array(K + 1),
+        ready = new Array(ALPHABET_SIZE);
+
+    for (let i = 0; i < ALPHABET_SIZE; i += 1) {
+        ready[i] = vl + 1;
+    }
+
+    for (let i = 0; i < K + 1; i += 1) {
+        dk[i] = new Array(ALPHABET_SIZE);
+
+        for (let j = 0; j < ALPHABET_SIZE + 1; j += 1) {
+            dk[i][j] = vl;
+        }
+    }
+
+    for (let i = vl - 1, j, k; i >= 1; i -= 1) {
+        k = v[i - 1] - A;
+
+        for (let j = ready[k] - 1; j >= Math.max(i + 1, vl - K); j -= 1) {
+            dk[j + K - vl][k] = j - i;
+        }
+
+        ready[k] = Math.max(i + 1, vl - K);
+    }
+
+    return dk;
+}
+
+function getMatches(_p, _v) {
+    const
+        p   = new Buffer(_p),
+        v   = new Buffer(_v),
+        sp  = getSkip(p),
+        sv  = getSkip(v),
+        pl  = p.length,
+        vl  = v.length,
+        dk  = getDK(v, vl),
+        lcs = getLCSTable(_p, _v),
+        m   = [];
+
+    // Nothing matches
+    if (vl > pl) {
+        return [];
+    }
+
+    // Everything matches
+    if (vl <= K) {
+        return Array
+            .apply(null, new Array(pl))
+            .map((x, i) => i);
+    }
+
+    let j = vl;
+    while (j <= pl) {
+        let h    = j,
+            i    = vl,
+            neq  = 0,
+            d    = vl - K;
+
+        while (i > 0 && neq <= K) {
+            let th   = p[h - 1] - A,
+                vi   = v[i - 1] - A,
+                skip = 1;
+
+            if (i >= vl - K) {
+                d = Math.min(d, dk[i + K - vl][th]);
+            }
+
+            if (th !== vi) {
+                neq += 1;
+            } else {
+                skip = Math.min(sp[h - 1], sv[i - 1]);
+
+                if (lcs.l > skip && lcs.p.has(h - 1) && lcs.v.has(i - 1)) {
+                    skip = lcs.l;
+                }
+            }
+
+            i -= skip;
+            h -= skip;
+        }
+
+        if (neq <= K) {
+            m.push(j - vl);
+        }
+
+        j += d;
+    }
+
+    return m;
+}
+
+function processData(input) {
+    input
+        .trim()
+        .split("\n")
+        .slice(1)
+        .map(x => x.split(" "))
+        .map(x => getMatches.apply(null, x))
+        .map(x => x.length ? x.join(" ") : "No Match!")
+        .forEach(x => console.log(x));
+}
+
+process.stdin.resume();
+process.stdin.setEncoding("ascii");
+
+let _input = "";
+process.stdin.on("data", function (input) {
+    _input += input;
+});
+
+process.stdin.on("end", function () {
+   processData(_input);
+});

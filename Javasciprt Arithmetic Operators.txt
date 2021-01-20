@@ -1,0 +1,9 @@
+function main() {
+    var a = +(readLine());
+    var b = +(readLine());
+    var area = a * b;
+    var perimeter = 2 * (a + b);
+    
+    console.log(area);
+    console.log(perimeter);
+}

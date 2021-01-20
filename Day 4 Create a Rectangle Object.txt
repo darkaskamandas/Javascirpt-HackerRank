@@ -1,0 +1,9 @@
+function createRectangleObject(a, b) {
+    let rectangle = new Object();
+    rectangle.length = a;
+    rectangle.width = b;
+    rectangle.perimeter = 2 * a + 2 * b;
+    rectangle.area = a * b;
+
+    return rectangle;
+}

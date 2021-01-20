@@ -1,0 +1,80 @@
+function processData(input) {
+  function newNode (vert, value){
+    return {
+      v: vert,
+      value: value,
+      neighbors: [],
+      sum: value
+    }
+  }
+  input = input.split('\n');
+  var values = input[1].split(' ').map(function(el){return parseInt(el)});
+  var verts = {};
+  for(var i=2;i<input.length;i++){
+    var temp = input[i].split(' ').map(function(el){return parseInt(el)});
+    verts[temp[0]] = verts[temp[0]] || newNode(temp[0], values[temp[0]-1]);
+    verts[temp[1]] = verts[temp[1]] || newNode(temp[1], values[temp[1]-1]);
+    verts[temp[0]].neighbors.push(verts[temp[1]]);
+    verts[temp[1]].neighbors.push(verts[temp[0]]);
+  }
+
+  var root = verts[1];
+  var stack = [];
+  stack.push(root);
+  var returnTable = {};
+  var doneTable = {};
+  while(stack.length > 0){
+    var current = stack.pop();
+    if(!returnTable[current.v]){
+      stack.push(current);
+      returnTable[current.v] = true;
+      current.neighbors.forEach(function(v){
+        if(!returnTable[v.v]){
+          stack.push(v)
+        }
+      });
+    }else{
+      current.neighbors.forEach(function(v){
+        if(doneTable[v.v]){
+          current.sum += v.sum;
+        };
+      });
+      doneTable[current.v] = true;
+    }
+  };
+
+  var stack = [];
+  stack.push(root);
+  var min = Number.POSITIVE_INFINITY;
+  var returnTable = {};
+  while(stack.length > 0){
+    var current = stack.pop();
+    returnTable[current.v] = true;
+    if(current !== root){
+      var subOne = current.sum;
+      var subTwo = root.sum - subOne;
+      var diff = Math.abs(subOne - subTwo);
+      if(diff < min){
+        min = diff;
+      }
+    }
+    current.neighbors.forEach(function(v){
+      if(!returnTable[v.v]){
+        stack.push(v);
+      }
+    })
+  }
+  console.log(min);
+}
+
+
+process.stdin.resume();
+process.stdin.setEncoding("ascii");
+_input = "";
+process.stdin.on("data", function (input) {
+    _input += input;
+});
+
+process.stdin.on("end", function () {
+   processData(_input);
+});

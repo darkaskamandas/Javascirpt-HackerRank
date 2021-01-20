@@ -1,0 +1,73 @@
+process.stdin.resume();
+process.stdin.setEncoding('ascii');
+
+var input_stdin = "";
+var input_stdin_array = "";
+var input_currentline = 0;
+
+process.stdin.on('data', function (data) {
+    input_stdin += data;
+});
+
+process.stdin.on('end', function () {
+    input_stdin_array = input_stdin.split("\n");
+    main();    
+});
+
+function readLine() {
+    return input_stdin_array[input_currentline++];
+}
+
+/////////////// ignore above this line ////////////////////
+
+function main() {
+    var n_temp = readLine().split(' ');
+    var n = parseInt(n_temp[0]);
+    var m = parseInt(n_temp[1]);
+    a = readLine().split(' ');
+    a = a.map(Number);
+    a.sort( function(a, b) { return a - b; } );
+    b = readLine().split(' ');
+    b.sort( function(a, b) { return a - b; } );
+    b = b.map(Number);
+    
+    // factors must be between max(a) and min(b)
+    let aBase = a[a.length-1];
+    let bBase = b[0];
+    let x = [];
+    for ( let i = 1; i * aBase <= bBase; ++i ) {
+        x.push( i * aBase );
+    }
+    let y = [];
+    
+    // for each x, check if its valid
+    for ( let i = 0; i < x.length; ++i ) {
+        let valid = true;
+        
+        for ( let j = 0; j < a.length; ++j ) {
+            if ( x[i] % a[j] !== 0 ) {
+                valid = false;
+                break;
+            }
+        }
+        if ( !valid ) {
+            continue;
+        }
+        
+        for ( let j = 0; j < b.length; ++j ) {
+            if ( b[j] % x[i] !== 0 ) {
+                valid = false;
+                break;
+            }
+        }
+        
+        if ( valid ) {
+            y.push( x[i] );
+        }
+    }
+    
+    //console.log( x );
+    //console.log( y );
+    //console.log( a, b );
+    console.log( y.length );
+}
