@@ -1,0 +1,173 @@
+'use strict';
+
+const fs = require('fs');
+
+process.stdin.resume();
+process.stdin.setEncoding('utf-8');
+
+let inputString = '';
+let currentLine = 0;
+
+process.stdin.on('data', inputStdin => {
+    inputString += inputStdin;
+});
+
+process.stdin.on('end', _ => {
+    inputString = inputString.trim().split('\n').map(str => str.trim());
+
+    main();
+});
+
+function readLine() {
+    return inputString[currentLine++];
+}
+
+/*
+ * Complete the jeanisRoute function below.
+ */
+function jeanisRoute(cities, roads) {
+    function constructGraph(roads, cutTables) {
+        function addToMap(map, from, toAndWeight) {
+            let toAndgWeightArr;
+            if (map.has(from))
+                toAndgWeightArr = map.get(from);
+            else {
+                toAndgWeightArr = [];
+                map.set(from, toAndgWeightArr);
+            }
+
+            toAndgWeightArr.push(toAndWeight);
+        }
+
+        let start2EndAndWeight = new Map();
+        for (let i = 0; i < roads.length; i++) {
+            let from = roads[i][0], to = roads[i][1];
+            if (cutTables !== undefined && (cutTables.has(from) || cutTables.has(to)))
+                continue;
+
+            addToMap(start2EndAndWeight, from, [to, roads[i][2]]);
+            addToMap(start2EndAndWeight, to, [from, roads[i][2]]);
+        }
+
+        return start2EndAndWeight;
+    }
+
+    function constructFrom2Tos(roads) {
+        function addToMap(map, from, to) {
+            let toSet;
+            if (map.has(from))
+                toSet = map.get(from);
+            else {
+                toSet = new Set();
+                map.set(from, toSet);
+            }
+
+            toSet.add(to);
+        }
+
+        let start2Ends = new Map();
+        for (let i = 0; i < roads.length; i++) {
+            let from = roads[i][0], to = roads[i][1];
+            addToMap(start2Ends, from, to);
+            addToMap(start2Ends, to, from);
+        }
+
+        return start2Ends;
+    }
+
+    function getLongestPath(graph, cities) {
+        // BFS graph, starts from [start], return array of [maxWeight, maxWeightVertex]
+        function bfs(graph, start) {
+            let queue = [[start, 0]], visited = new Set(), mw = 0, mwNode = start;    // 
+            while (queue.length > 0) {
+                let nodeObj = queue.shift(), from = nodeObj[0], rw = nodeObj[1];
+                visited.add(from);
+
+                let edges = graph.get(from);
+                for (let edge of edges) {
+                    let to = edge[0], weight = edge[1];
+                    if (visited.has(to))
+                        continue;
+
+                    let edgeRW = rw + weight;
+                    if (edgeRW > mw) {
+                        mw = edgeRW;
+                        mwNode = to;
+                    }
+                    queue.push([to, edgeRW]);
+                }
+            }
+
+            return [mw, mwNode];
+        }
+
+        let firstBfsResult = bfs(graph, cities[0]), bfsFrom = firstBfsResult[1];
+
+        let secondBfsResult = bfs(graph, bfsFrom);
+        return secondBfsResult[0];
+    }
+
+    function pruneGraph(cities, roads) {
+        let citySet = new Set(cities), start2Ends = constructFrom2Tos(roads);
+        let cutTables = new Set(), cutTablesSize, times = 0, candidates = Array.from(start2Ends.keys());
+        do {
+            let newCandidates = [];
+            cutTablesSize = cutTables.size;
+            for (let i = 0; i < candidates.length; i++) {
+                let candidate = candidates[i], toSet = start2Ends.get(candidate);
+                if (toSet === undefined)
+                    continue;
+
+                if (!citySet.has(candidate) && toSet.size === 1) {
+                    cutTables.add(candidate);
+                    for (let to of toSet.keys()) {
+                        start2Ends.get(to).delete(candidate);
+                        newCandidates.push(to);
+                    }
+
+                    start2Ends.delete(candidate);
+                }
+            }
+
+            candidates = newCandidates;
+            times++;
+        }
+        while (cutTables.size !== cutTablesSize)
+
+        // console.log(`pruneGraph finish: ${new Date()}, times: ${times}`);
+        return constructGraph(roads, cutTables);
+    }
+
+    // console.log('pruneGraph start: ' + new Date());
+    let graph = pruneGraph(cities, roads);
+
+    let totalWeight = 0;
+    for (let toAndgWeightArr of graph.values())
+        totalWeight += toAndgWeightArr.reduce((agg, cur) => agg + cur[1], 0);
+
+    return totalWeight - getLongestPath(graph, cities);
+}
+
+function main() {
+    const ws = fs.createWriteStream(process.env.OUTPUT_PATH);
+
+    const nk = readLine().split(' ');
+
+    const n = parseInt(nk[0], 10);
+
+    const k = parseInt(nk[1], 10);
+
+    const cities = readLine().split(' ').map(cityTemp => parseInt(cityTemp, 10));
+
+    let roads = Array(n-1);
+
+    for (let roadsRowItr = 0; roadsRowItr < n-1; roadsRowItr++) {
+        roads[roadsRowItr] = readLine().split(' ').map(roadsTemp => parseInt(roadsTemp, 10));
+    }
+
+    let result = jeanisRoute(cities, roads);
+
+    ws.write(result + "\n");
+
+    ws.end();
+}
