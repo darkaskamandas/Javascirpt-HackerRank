@@ -1,0 +1,108 @@
+var outgoing_edges = [], incoming_edges = [], topSortArr = [], visited = {};
+var cycle = false, startTime = [], endTime = [], time = 0;
+
+function init() {
+    outgoing_edges = [];
+    incoming_edges = [];
+    topSortArr = [];
+    visited = {};
+    cycle = false;
+    startTime = [];
+    endTime = [];
+    time = 0;
+}
+function dfs(from, N) {
+    var to, mayBeCycle = false;
+    
+    if(visited[from] == 1) { return true; }
+    if(visited[from] == 2) { return false; }
+    
+    startTime[from] = ++time;
+    visited[from] = 1;
+    for(to in outgoing_edges[from]) {
+        mayBeCycle = dfs(to, N) || mayBeCycle;
+    }
+    visited[from] = 2;
+    endTime[from] = ++time;
+    if(mayBeCycle && visited[N] && (startTime[from] <= startTime[N]) && (endTime[from] >= endTime[N])) { 
+        cycle = true;
+    }
+    
+    topSortArr.push(parseInt(from));
+    return false;
+}
+function topSort(N) {
+    dfs(1, N);
+    return topSortArr.reverse();
+}
+
+function getNumOfPaths(topSortedOrder, startVertex, N) {
+    var i, j, incoming;
+    var vertex, total;
+    var numOfPaths = [];
+    
+    for(i = 0; i <= N; i++) {
+        numOfPaths[i] = 0;
+    }
+    numOfPaths[1] = 1;
+    
+    for(i = 1; i < topSortedOrder.length; i++) {
+        vertex = topSortedOrder[i];                
+        incoming = incoming_edges[vertex];
+        total = 0;
+        for(j in incoming) {
+            total += (numOfPaths[j] * outgoing_edges[j][vertex]);
+            total %= 1e9;
+        }
+        numOfPaths[vertex] = total;
+    }
+    
+    return numOfPaths[N];
+}
+
+function processData(input) {
+    var lines = input.split('\n');
+    var getIntArrFromLine = function(line) {
+        return line.split(' ').map(function(e) { return parseInt(e, 10); });
+    };
+    var i, from, to, N, K, arr, ans;
+    
+    init();
+    arr = getIntArrFromLine(lines[0]);
+    N = arr[0];
+    K = arr[1];
+    
+    for(i = 1; i <= N; i++) {
+        outgoing_edges[i] = {};
+        incoming_edges[i] = {};
+    }
+    for(i = 1; i <= K; i++) {
+        arr = getIntArrFromLine(lines[i]);
+        //console.log(arr);
+        
+        from = arr[0];
+        to = arr[1];
+        if(!outgoing_edges[from][to]) {
+            outgoing_edges[from][to] = 1;
+        } else {
+            outgoing_edges[from][to]++;
+        }
+        incoming_edges[to][from] = true;
+    }    
+    arr = topSort(N);
+    //console.log(arr);
+    //console.log(cycle);
+    ans = cycle ? "INFINITE PATHS" : getNumOfPaths(arr, 1, N);
+    console.log(ans);
+} 
+
+process.stdin.resume();
+process.stdin.setEncoding("ascii");
+_input = "";
+process.stdin.on("data", function (input) {
+    _input += input;
+});
+
+process.stdin.on("end", function () {
+   processData(_input);
+});
