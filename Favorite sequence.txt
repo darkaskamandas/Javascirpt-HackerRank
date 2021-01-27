@@ -1,0 +1,109 @@
+function processData(input) {
+  var lines = input.split('\n');
+  var N  = parseInt(lines.shift(), 10);
+  var graph = new Graph();
+
+  for (var i = 0; i < N; i++) {
+    var K = parseInt(lines.shift(), 10);
+    var sequence = lines.shift().split(' ').map(Number);
+    var sequenceLength = sequence.length;
+
+    for (var j = 0; j < sequenceLength - 1; j++) {
+      graph.addEdge(sequence[j], sequence[j + 1]);
+    }
+  }
+
+  console.log(graph.topoSort().join(' '));
+}
+
+function Graph() {
+  this.edges = {};
+  this.inDegree = {};
+}
+
+Graph.prototype.addEdge = function (u, v) {
+  // Initialize the edge array and in-degree counter.
+  if (!this.edges[u]) {
+    this.edges[u] = [];
+  }
+
+  if (!this.edges[v]) {
+    this.edges[v] = [];
+  }
+
+  if (!this.inDegree[u]) {
+    this.inDegree[u] = 0;
+  }
+
+  if (!this.inDegree[v]) {
+    this.inDegree[v] = 0;
+  }
+
+  // Link u to v and maintain the in-degree for v.
+  this.edges[u].push(v);
+  this.inDegree[v]++;
+};
+
+Graph.prototype.topoSort = function () {
+  var _this = this;
+  var topoQueue = [];
+  var seenDegree = {};
+
+  var result = [];
+
+  // Sort all edges.
+  Object.keys(this.edges).forEach(function (node) {
+    _this.edges[node] = _this.edges[node].sort(sortAscending);
+  });
+
+  // Determine which edges have no incoming edges.
+  Object.keys(this.inDegree).forEach(function (node) {
+    var nodeInDegree = _this.inDegree[node];
+    if (!nodeInDegree) {
+      topoQueue.push(node);
+    }
+  });
+
+  // Sort them per lexographic requirement.
+  // The extracted keys will be strings. Cast them and sort.
+  topoQueue = topoQueue.map(Number).sort(sortAscending);
+
+  while (topoQueue.length) {
+    var origin = topoQueue.shift();
+    var nextEdges = _this.edges[origin];
+
+    // Add to the sorted result.
+    result.push(origin);
+
+    nextEdges.forEach(function (edge) {
+      if (!seenDegree[edge]) {
+        seenDegree[edge] = 0;
+      }
+
+      seenDegree[edge]++;
+
+      if (_this.inDegree[edge] === seenDegree[edge]) {
+        topoQueue.push(edge);
+        topoQueue = topoQueue.sort(sortAscending);
+      }
+    });
+  }
+
+  return result;
+};
+
+function sortAscending(a, b) {
+  if (a === b) { return 0; }
+  return (a > b) ? 1 : -1;
+}
+
+process.stdin.resume();
+process.stdin.setEncoding("ascii");
+_input = "";
+process.stdin.on("data", function (input) {
+    _input += input;
+});
+
+process.stdin.on("end", function () {
+   processData(_input);
+});

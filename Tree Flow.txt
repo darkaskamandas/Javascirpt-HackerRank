@@ -1,0 +1,67 @@
+function buildTree (numNodes, edges){
+    let nodes = new Array(numNodes);
+    
+    for (let i=0; i< nodes.length;i++){
+        nodes[i] = {
+            nodeId:i,
+            relatives : [], 
+            weights: [], 
+            distanceToRoot:Infinity,
+            visited:false
+        }
+    }
+    nodes[0].distanceToRoot=0;
+    nodes[0].weight=0;
+    for (let k=0;k<edges.length;k++){
+        let edge = edges[k],
+            a = edge[0]-1,
+            b = edge[1]-1,
+            weight = edge[2];
+        nodes[a].weights.push(weight);
+        nodes[a].relatives.push(b);
+        nodes[b].weights.push(weight);
+        nodes[b].relatives.push(a);
+    }
+    return nodes;
+}
+
+function calculateDistancesFromRoot(tree){
+    let visited = [];
+    
+    function traverse(nodeNo, pDist, weight) {
+        if (tree[nodeNo].visited){
+            return;
+        } else {
+            
+            tree[nodeNo].distanceToRoot = pDist+weight;
+            tree[nodeNo].visited=true;
+            for (let i=0;i<tree[nodeNo].relatives.length;i++){
+                traverse(tree[nodeNo].relatives[i],tree[nodeNo].distanceToRoot,tree[nodeNo].weights[i]);
+            }
+        }
+    }
+    traverse(0,0,0);
+    //console.log(tree);
+    return tree.map(x=>x.distanceToRoot).reduce((a,b) => a+b);
+}
+
+function processData(input) {
+    //Enter your code here
+    let inputStrings = input.split(/,|\n/),
+        numNodes = parseInt(inputStrings.shift()),  
+        edges = inputStrings.map(x=>x.split(' ').map(y=>parseInt(y))),
+        tree = buildTree(numNodes,edges);
+
+    console.log(calculateDistancesFromRoot(tree));
+}
+
+process.stdin.resume();
+process.stdin.setEncoding("ascii");
+_input = "";
+process.stdin.on("data", function (input) {
+    _input += input;
+});
+
+process.stdin.on("end", function () {
+   processData(_input);
+});
