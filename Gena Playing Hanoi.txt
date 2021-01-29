@@ -1,331 +1,205 @@
-'use strict';
-
 process.stdin.resume();
-process.stdin.setEncoding('utf-8');
+process.stdin.setEncoding('ascii');
 
-let inputString = '';
-let currentLine = 0;
+var input_stdin = "";
+var input_stdin_array = "";
+var input_currentline = 0;
 
-process.stdin.on('data', inputStdin => {
-    inputString += inputStdin;
+process.stdin.on('data', function (data) {
+    input_stdin += data;
 });
 
-process.stdin.on('end', _ => {
-    inputString = inputString.replace(/\s*$/, '')
-        .split('\n')
-        .map(str => str.replace(/\s*$/, ''));
-
-    main();
+process.stdin.on('end', function () {
+    input_stdin_array = input_stdin.split("\n");
+    main();    
 });
 
 function readLine() {
-    return inputString[currentLine++];
+    return input_stdin_array[input_currentline++];
 }
+
+/////////////// ignore above this line ////////////////////
 
 function main() {
-    const N = parseInt(readLine(), 10);
-
-    const a = readLine().split(' ').map(aTemp => parseInt(aTemp, 10));
-    
-    const numRods = 4;
-    const towerSolver = new TowerSolver(a, numRods);
-    const result = towerSolver.solve();
-    
-    process.stdout.write(result + "\n");
+    var i;
+    var n = +readLine();
+    var discs = readLine().split(' ').map(Number);
+    var towers = new Array(5);
+    var i;
+    for (i = 1; i <= 4; i++) {
+        towers[i] = [];
+    }
+    discs.unshift(null);
+    for (i = 1; i <= n; i++) {
+        towers[discs[i]].push(i);
+    }
+    for (i = 1; i <= 4; i++) {
+        towers[i].sort(function(a, b) {
+            return b - a;
+        });
+    }
+    console.log(restoreTower(towers, n));
 }
 
-class TowerSolver {
-
-  constructor(discPositionArray, numRods) {
-    this.discPositionArray = discPositionArray;
-    this.numDiscs = discPositionArray.length;
-    this.numRods = numRods;
-    this.towersSeen = {};
-    const discFreedom = Math.ceil(this.numDiscs / 2);
-    this.rod1TargetLength = 1 + discFreedom;
-    this.rod1TargetDisc = this.numDiscs - discFreedom;
-    this.greedy = 0;
-    // this.debugFlag = true;
-    this.debugFlag = false;
-  }
-
-  solve() {
-    // Get initial tower
-    const initialTower = this.getInitialTower();
-  
-    let towerSolution;
-    const foundAnswer = this.isTowerRestored(initialTower);
-    if (foundAnswer) {
-      towerSolution = initialTower;
-    } else {
-      towerSolution = this.rearrangeTower(initialTower);
+function restoreTower(towers, n) {
+    var i, j, disc, disc2, newState, numOps, len_i, len_j, emptyUsed;
+    var visited = {};
+    var state = copyState(towers);
+    var queue = new Queue();
+    if (state[1].length === n) {
+        return 0;
     }
-  
-    if (towerSolution === undefined) {
-      return undefined;
-    }
-    const numMoves = towerSolution[0];
-    if (this.debugFlag) console.log("numMoves", numMoves);
-    return numMoves;
-  }
-  
-  rearrangeTower(initialTower) {
-    const initialTowerKey = this.getTowerKey(initialTower);
-    this.towersSeen[initialTowerKey] = true;
-
-    const towerQueues = {
-      current: [initialTower],
-      nextTarget: [],
-      nextPossible: []
-    }
-
+    queue.enqueue(state);
+    visitState(state, visited, 0);
     while (true) {
-      // Get current tower
-      let currentTower;
-      if (towerQueues.current.length > 0) {
-        currentTower = towerQueues.current.shift(); // e.g. [0, [1, 3], [], [], [2]]
-      } else {
-        // no more queued towers for the current level, check next level
-        if (towerQueues.nextTarget.length > 0) {
-          towerQueues.current = towerQueues.nextTarget;
-          if (this.debugFlag) {
-            console.log("new (target) towers queue");
-            towerQueues.current.forEach(targetTower => console.log("  ", targetTower));
-          }
-          this.rod1TargetDisc--;
-          this.rod1TargetLength++;
-          towerQueues.nextTarget = [];
-          towerQueues.nextPossible = [];
-          continue;
-        } else if (towerQueues.nextPossible.length > 0) {
-          towerQueues.current = towerQueues.nextPossible;
-          towerQueues.nextPossible = [];
-          continue;
-        } else {
-          // No current, target, or possible towers...exit loop
-          break;
+        state = queue.dequeue();
+        numOps = visited[stateKey(state)] + 1;
+        for (i = 1; i <= 4; i++) {
+            len_i = state[i].length;
+            if (len_i > 0) {
+                disc = state[i][len_i - 1];
+                
+                // Optimization to reduce memory use
+                if (i === 1 && disc === n - len_i + 1) {
+                    continue;
+                }
+                
+                emptyUsed = false;
+                for (j = 1; j <= 4; j++) {
+                    len_j = state[j].length;
+                    
+                    // Optimizations to reduce memory use
+                    if (i !== 1 && j !== 1 && len_i === 1 && len_j === 0) {
+                        continue;
+                    }
+                    if (j !== 1 && len_j === 0) {
+                        if (emptyUsed) {
+                            continue;
+                        }
+                        emptyUsed = true;
+                    }
+                    
+                    disc2 = state[j][len_j - 1];
+                    if (j !== i && (!disc2 || disc2 > disc)) {
+                        newState = copyState(state);
+                        newState[i].pop();
+                        newState[j].push(disc);
+                        if (j === 1 && newState[1].length === n) {
+                            return numOps;
+                        }
+                        if (visitState(newState, visited, numOps)) {
+                            queue.enqueue(newState);
+                        }
+                    }
+                }
+            }
         }
-      }
-      if (this.debugFlag && false) console.log("currentTower", currentTower);
-
-      // Get next options for each rod for the current tower
-      for (let rodNum = 1; rodNum <= this.numRods; rodNum++) {
-        if (this.debugFlag && false) console.log("getting discs for rod", rodNum);
-        // Get discs on this rod
-        const rodDiscs = currentTower[rodNum]; // e.g. currentTower[1] = [1, 3]
-  
-        // Go to next rod if there are no discs on this rod
-        if (rodDiscs.length === 0) {
-          continue;
-        }
-  
-        // Get the next tower options from moving the current rod
-        const mustBeTarget = (towerQueues.nextTarget.length > 0);
-        const nextTowerOptons = this.getNextTowerOptions(currentTower, rodNum, mustBeTarget);
-
-        // Return the answer if it has been found
-        if (nextTowerOptons.answer !== undefined) {
-          if (this.debugFlag) console.log("ANSWER: ", currentTower, "->", nextTowerOptons.answer);
-          return nextTowerOptons.answer;
-        }
-
-        // Add to target towers queue (if any)
-        if (nextTowerOptons.target.length > 0) {
-          if (this.debugFlag) {
-            console.log('target towers');
-            nextTowerOptons.target.forEach(targetTower => console.log("  ", currentTower, "->", targetTower));
-          }
-          towerQueues.nextTarget.push(...nextTowerOptons.target);
-          continue;
-        }
-
-        // Continue looping if we are only looking for target towers
-        if (mustBeTarget) {
-          continue;
-        }
-
-        // Continue looping if there are no possibilities
-        const possibleTowers = nextTowerOptons.possible;        
-        if (possibleTowers.length === 0) {
-          continue;
-        }
-  
-        if (this.debugFlag) {
-          console.log('possible towers for rod ', rodNum);
-          possibleTowers.forEach(possibleTower => console.log("  ", currentTower, "->", possibleTower));
-        }
-      // Add the possible towers to the end of the queue
-        towerQueues.nextPossible.push(...possibleTowers);
-      }
     }
-  
-    // No answer
-    return undefined;
-  }
-  
-  getNextTowerOptions(currentTower, currentRodNum, mustBeTarget) {
-    const nextTowerOptions = {
-      answer: undefined,
-      target: [],
-      possible: []
-    };
-    for (let newRodNum = 1; newRodNum <= this.numRods; newRodNum++) {
-      // Must be a different rod
-      if (currentRodNum === newRodNum) {
-        continue;
-      }
-
-      const newRodDiscs = currentTower[newRodNum]; // e.g. []
-      const currentRodDiscs = currentTower[currentRodNum]; // e.g. [3]
-
-      // Pointless to move [ [4] [] ] -> [ [] [4] ]
-      const isNewRodEmpty = (newRodDiscs.length === 0);
-      if (currentRodNum != 1 && newRodNum != 1 && isNewRodEmpty && currentRodDiscs.length === 1) {
-        continue;
-      }
-  
-      // Can only move to a rod that is empty or has a higher top disc
-      // e.g. Given [ [3], [], [], [2] ] then Disc 1 can move to the 2nd, 3rd, or 4th rods
-      const currentRodTopDiscNum = currentRodDiscs[0];
-      const isLegalMove = (isNewRodEmpty || newRodDiscs[0] > currentRodTopDiscNum);
-      if (!isLegalMove) {
-        if (this.debugFlag && false) console.log("move disc", currentRodTopDiscNum, "to rod", newRodNum, "is not legal");
-        continue;
-      }
-  
-      // Move top disc from current rod to new rod and increment counter
-      const possibleTower = this.cloneTower(currentTower);
-      possibleTower[currentRodNum].shift(); // remove top disc
-      possibleTower[newRodNum].unshift(currentRodTopDiscNum); // add disc to top of new rod
-  
-      // Check if tower has already been seen
-      const towerKey = this.getTowerKey(possibleTower);
-      if (this.isTowerSeen(towerKey)) {
-        continue;
-      }
-  
-      // Increment move counter and add to towers seen
-      possibleTower[0] = currentTower[0] + 1;
-      this.cacheTowerVariations(possibleTower, towerKey);
-  
-      // Return early if we found the answer
-      const foundAnswer = this.isTowerRestored(possibleTower);
-      if (foundAnswer) {
-        nextTowerOptions.possible = [];
-        nextTowerOptions.target = [];
-        nextTowerOptions.answer = possibleTower;
-        return nextTowerOptions;
-      }
-
-      if (this.greedy) {
-        // Return early if the target disc is on rod 1
-        const rod1Discs = possibleTower[1];
-        const isTarget = (rod1Discs.length === this.rod1TargetLength && rod1Discs[0] === this.rod1TargetDisc);
-        if (isTarget) {
-          if (this.debugFlag) console.log(`TARGET: disc ${this.rod1TargetDisc} is on rod 1 => `, possibleTower);
-          nextTowerOptions.possible = [];
-          nextTowerOptions.target.push(possibleTower);
-          mustBeTarget = true;
-          continue;
-        }
-
-        // Continue if must be a target
-        if (mustBeTarget) {
-          continue;
-        }
-      }
-  
-      // Add the possible tower to the result array
-      nextTowerOptions.possible.push(possibleTower);
-    }
-    return nextTowerOptions;
-  }
-  
-  isTowerRestored(tower) {
-    // Things are restored when disc 1 has all discs
-    const rod1Discs = tower[1];
-    const result = (rod1Discs.length === this.numDiscs);
-    return result;
-  }
-  
-  cloneTower(tower) {
-    const newTower = tower.map((rodDiscs, index) => {
-      return (index === 0) ? 0 : rodDiscs.slice();
-    });
-    return newTower;
-  }
-  
-  getInitialTower() {
-      // Initialize rods on tower (no discs yet)
-      const initialTower = Array(this.numRods + 1);
-      initialTower[0] = 0; // "Rod" 0 will maintain the number of moves
-      for (let rodNum = 1; rodNum <= this.numRods; rodNum++) {
-        initialTower[rodNum] = [];
-      }
-      if (this.debugFlag) console.log("blank", initialTower);
-    
-      // Add initial discs to tower
-      for (let discNum = 1; discNum <= this.numDiscs; discNum++) {
-        const discIdx = discNum - 1;
-        const rodNum = this.discPositionArray[discIdx];
-        if (this.debugFlag) console.log(`pushing disc ${discNum} onto rod ${rodNum}`);
-        initialTower[rodNum].push(discNum);
-        // if (this.debugFlag) console.log(allRodDiscs);
-      }
-      if (this.debugFlag) console.log("initialized", initialTower);
-      return initialTower;
-  }
-
-  getTowerKey(tower) {
-    return JSON.stringify(tower);
-  }
-
-  isTowerSeen(towerKey) {
-    const isAlreadySeen = (this.towersSeen.hasOwnProperty(towerKey));
-    if (false && this.debugFlag && isAlreadySeen) console.log("already seen", possibleTower);
-    return isAlreadySeen;
-  }
-
-  cacheTowerVariations(tower, towerKey) {
-    this.cacheTower(towerKey);
-    // 2, 3, 4 -> 3, 2, 4
-    const towerVariation324 = [0, tower[1], tower[3], tower[2], tower[4]];
-    const towerKey324 = this.getTowerKey(towerVariation324);
-    this.cacheTower(towerKey324);
-    // 2, 3, 4 -> 2, 4, 3
-    const towerVariation243 = [0, tower[1], tower[2], tower[4], tower[3]];
-    const towerKey243 = this.getTowerKey(towerVariation243);
-    this.cacheTower(towerKey243);
-    // 2, 3, 4 -> 4, 3, 2
-    const towerVariation432 = [0, tower[1], tower[4], tower[3], tower[2]];
-    const towerKey432 = this.getTowerKey(towerVariation432);
-    this.cacheTower(towerKey432);
-    // 2, 3, 4 -> 3, 4, 2
-    const towerVariation342 = [0, tower[1], tower[3], tower[4], tower[2]];
-    const towerKey342 = this.getTowerKey(towerVariation342);
-    this.cacheTower(towerKey342);
-    // 2, 3, 4 -> 4, 2, 3
-    const towerVariation423 = [0, tower[1], tower[4], tower[2], tower[3]];
-    const towerKey423 = this.getTowerKey(towerVariation423);
-    this.cacheTower(towerKey423);
-  }
-
-  cacheTower(towerKey) {
-    this.towersSeen[towerKey] = true;
-  }
 }
 
-// let a;
-// a = [1, 4, 1];
-// a = [1, 3, 3];
-// a = [1, 3, 4, 2, 4, 3, 1]; // test case 9, fails greedy, passes non-greedy
-// a = [4, 1, 2, 1, 4, 3, 3, 4, 3, 4]; // test case 11
-// const numRods = 4;
-// const towerSolver = new TowerSolver(a, numRods);
+function copyState(state) {
+    var state_i;
+    var cpy = new Array(5);
+    var i, j;
+    for (i = 1; i <= 4; i++) {
+        state_i = state[i];
+        cpy[i] = new Array(state_i.length);
+        for (j = 0; j < state_i.length; j++) {
+            cpy[i][j] = state_i[j];
+        }
+    }
+    return cpy;
+}
 
-// const startTime = (new Date()).getTime();
-// const result = towerSolver.solve();
-// const endTime = (new Date()).getTime();
+function stateKey(state) {
+    var i, j, state_i;
+    var key = '';
+    for (i = 1; i <= 4; i++) {
+        state_i = state[i];
+        for (j = 0; j < state_i.length; j++) {
+            key += state_i[j] - 1;
+        }
+        key += ',';
+    }
+    return key;
+}
 
-// console.log(result);
-// console.log("It took", (endTime - startTime) / 1000, "seconds");
+function visitState(state, visited, numOps) {
+    var key = stateKey(state);
+    if (visited[key]) {
+        return false;
+    }
+    visited[key] = numOps;
+    return true;
+}
+
+/*
+
+Queue.js
+
+A function to represent a queue
+
+Created by Stephen Morley - http://code.stephenmorley.org/ - and released under
+the terms of the CC0 1.0 Universal legal code:
+
+http://creativecommons.org/publicdomain/zero/1.0/legalcode
+
+*/
+
+/* Creates a new queue. A queue is a first-in-first-out (FIFO) data structure -
+ * items are added to the end of the queue and removed from the front.
+ */
+function Queue(){
+
+  // initialise the queue and offset
+  var queue  = [];
+  var offset = 0;
+
+  // Returns the length of the queue.
+  this.getLength = function(){
+    return (queue.length - offset);
+  }
+
+  // Returns true if the queue is empty, and false otherwise.
+  this.isEmpty = function(){
+    return (queue.length == 0);
+  }
+
+  /* Enqueues the specified item. The parameter is:
+   *
+   * item - the item to enqueue
+   */
+  this.enqueue = function(item){
+    queue.push(item);
+  }
+
+  /* Dequeues an item and returns it. If the queue is empty, the value
+   * 'undefined' is returned.
+   */
+  this.dequeue = function(){
+
+    // if the queue is empty, return immediately
+    if (queue.length == 0) return undefined;
+
+    // store the item at the front of the queue
+    var item = queue[offset];
+    
+    // increment the offset and remove the free space if necessary
+    if (++ offset * 2 >= queue.length){
+      queue  = queue.slice(offset);
+      offset = 0;
+    }
+
+    // return the dequeued item
+    return item;
+
+  }
+
+  /* Returns the item at the front of the queue (without dequeuing it). If the
+   * queue is empty then undefined is returned.
+   */
+  this.peek = function(){
+    return (queue.length > 0 ? queue[offset] : undefined);
+  }
+
+}
