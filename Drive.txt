@@ -1,0 +1,96 @@
+process.stdin.resume();
+process.stdin.setEncoding('ascii');
+
+var input_stdin = "";
+var input_stdin_array = "";
+var input_currentline = 0;
+
+process.stdin.on('data', function (data) {
+    input_stdin += data;
+});
+
+process.stdin.on('end', function () {
+    input_stdin_array = input_stdin.split("\n");
+    main();    
+});
+
+function readLine() {
+    return input_stdin_array[input_currentline++];
+}
+
+/////////////// ignore above this line ////////////////////
+
+function Station(distance) {
+    this.distanceTo = distance;
+    this.passengers = [];
+    
+    this.latestLeaveTime = function() {
+        return this.passengers.length == 0 ? 0 
+        : Math.max( ...this.passengers );
+    }
+    
+    Station.all.push(this);
+}
+Station.all = [];
+
+function Passenger(arrivalTime, endLocation) {
+    this.timeAtStation = arrivalTime;
+    this.finalStation  = endLocation;
+    Passenger.all.push(this);
+}
+Passenger.all = []
+
+function main() {
+    var temp = readLine().split(" ").map(Number),
+        numStations   = temp[0],    // Number of Stations
+        numPassengers = temp[1],    // Number of Passengers
+        amtNitro      = temp[2];    // Amount of Nitro available
+    
+    // Build the stations
+    var distances = [0].concat( readLine().split(" ").map(Number) );
+    for (var s = 0; s < numStations; ++s) { new Station(distances[s]); }
+    // Build the passengers
+    for (var p = 0; p < numPassengers; ++p) {
+        var temp = readLine().split(" ").map(Number);
+        Station.all[temp[1]-1].passengers.push( temp[0] );
+        new Passenger( temp[0], temp[2]-1 );
+    }
+    
+    // Function to return the final distance after nitro reduction
+    var UseNitro = function(distance, targetTime) {
+        if (targetTime < 0) { targetTime = 0; }
+        while (amtNitro > 0 && distance > targetTime) {
+            distance--; amtNitro--;
+        }
+        return distance;
+    }
+    
+    // Build our world
+    var arrivalTimes = [0];
+    var currentTime  = 0;
+    
+    for (var s = 0; s < numStations - 1; ++s) {
+        var thisStation = Station.all[s],
+            nextStation = Station.all[s+1];
+        
+        // Leave the station either immediately, or whenever the last passenger shows up
+        currentTime = Math.max(currentTime, thisStation.latestLeaveTime());
+        
+        // Determine if nitro is needed
+        if (nextStation.latestLeaveTime() < currentTime + nextStation.distanceTo) {
+            currentTime += UseNitro(
+                nextStation.distanceTo, nextStation.latestLeaveTime() - currentTime
+            );
+        } else {
+            currentTime += nextStation.distanceTo;
+        }
+        
+        // Arrive at the next station
+        arrivalTimes[s+1] = currentTime;
+    }
+    
+    var result = Passenger.all
+        .map( function(x) { return arrivalTimes[x.finalStation] - x.timeAtStation; } )
+        .reduce( function(prev, curr) { return prev + curr; } );
+    console.log(result);
+}
