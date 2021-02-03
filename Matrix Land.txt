@@ -1,0 +1,78 @@
+process.stdin.resume();
+process.stdin.setEncoding('ascii');
+
+var input_stdin = "";
+var input_stdin_array = "";
+var input_currentline = 0;
+
+process.stdin.on('data', function (data) {
+    input_stdin += data;
+});
+
+process.stdin.on('end', function () {
+    input_stdin_array = input_stdin.split("\n");
+    main();    
+});
+
+function readLine() {
+    return input_stdin_array[input_currentline++];
+}
+
+/////////////// ignore above this line ////////////////////
+var A = [];
+var n = 0;
+var m = 0;
+var mem = {};
+function matrixLand(row, col) {
+    var coord = row + ':' + col;
+    if (mem[coord]) {
+        return mem[coord];
+    }
+
+    var maxByCoord = 0;
+
+    for (var start = 0; start <= col; start++) {
+        for (var end = m - 1; end >= col; end--) {
+            var sum = 0;
+            for (var j = start; j <= end; j++) {
+                sum += A[row][j];
+            }
+            if (row < n - 1) {
+                for (var j = start; j <= end; j++) {
+                    var down = sum + matrixLand(row + 1, j);
+                    if (down > maxByCoord) {
+                        maxByCoord = down;
+                    }
+                }
+            } else {
+                if (sum > maxByCoord) {
+                    maxByCoord = sum;
+                }
+            }
+        }
+    }
+    
+    mem[coord] = maxByCoord;
+    return maxByCoord;
+}
+
+function main() {
+    var n_temp = readLine().split(' ');
+    n = parseInt(n_temp[0]);
+    m = parseInt(n_temp[1]);
+    for(A_i = 0; A_i < n; A_i++){
+       A[A_i] = readLine().split(' ');
+       A[A_i] = A[A_i].map(Number);
+    }
+    
+    var max = 0;
+    for (let j = 0; j < m; j++) {
+        var result = matrixLand(0, j);
+        if (result > max) {
+            max = result
+        }
+    }
+    
+    process.stdout.write("" + max + "\n");
+
+}

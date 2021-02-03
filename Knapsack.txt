@@ -1,0 +1,64 @@
+function processData(input) {
+    var data = input.split('\n').slice(1);
+    var targets = [];
+    var nums = [];
+    var i;
+    
+    for (i = 0; i < data.length; i++) {
+        if (i % 2 === 0) {
+            targets.push(parseInt(data[i].split(' ')[1], 10));
+        } else {
+            nums.push(
+                data[i]
+                    .split(' ')
+                    .map(function(n) { return parseInt(n, 10); })
+                    .reduce(function(result, n) {
+                        if (result.length === 0 || result[result.length - 1] !== n) {
+                            result.push(n);
+                        }
+                        return result;
+                    }, []));
+        }
+    }
+
+    function closestSum(target, ns) {
+        var mem = {};
+
+        function ms(t) {
+            if (t in mem) return mem[t];
+            else if (t < 1) return 0;
+
+            var max = 0;
+            var sum, i;
+
+            for (i = 0; i < ns.length; i++) {
+                sum = ns[i] + ms(t - ns[i]);
+                if (sum < t && sum > max) {
+                    max = sum;
+                } else if (sum === t) {
+                    return t;
+                }
+            }
+
+            mem[t] = max;
+            return max;
+        }
+
+        return ms(target);
+    }
+    
+    for (i = 0; i < targets.length; i++) {
+        console.log(closestSum(targets[i], nums[i]));
+    }
+} 
+
+process.stdin.resume();
+process.stdin.setEncoding("ascii");
+_input = "";
+process.stdin.on("data", function (input) {
+    _input += input;
+});
+
+process.stdin.on("end", function () {
+   processData(_input);
+});
