@@ -1,0 +1,56 @@
+let BIG = Math.pow(51 + 10, 2); // Number way bigger than board size.
+
+let N, M, K, board;
+let cache;
+
+let isValid = (i, j, time) => time >= 0 && i >= 0 && i < N && j >= 0 && j < M;
+
+let getMinMoves = (i, j, time) => !isValid(i, j, time) ? BIG : (()=>{
+  let entry = board[i][j];
+  // If we are at the end, then great!
+  if (entry === '*') { return 0; }
+  // If we already have the result, then great!
+  if (cache[i][j].has(time)) { return cache[i][j].get(time); }
+
+  let count = x => (x === entry) ? 0 : 1;
+
+  let result = Math.min(
+    count('U') + getMinMoves(i - 1, j, time -1),
+    count('L') + getMinMoves(i, j - 1, time -1),
+    count('D') + getMinMoves(i + 1, j, time -1),
+    count('R') + getMinMoves(i, j + 1, time -1)
+  );
+
+  cache[i][j].set(time, result);
+  return result;
+})();
+
+function processData(input) {
+    //Enter your code here
+    let [ info, ...rows ] = input.split('\n');
+    [ N, M, K ] = info.split(' ').map(Number);
+    board = rows;// rows.map(row => row.split(' '));
+    cache = rows.map(x => x.split('').map(()=>new Map()));// Array.apply(null, { length: N*M });
+    // console.log(board);
+    let result = getMinMoves(0, 0, K);
+
+    // Check num moves
+    if (result < BIG) {
+      console.log(result);
+    } else {
+      console.log(-1);
+    }
+
+}
+
+
+process.stdin.resume();
+process.stdin.setEncoding("ascii");
+let _input = "";
+process.stdin.on("data", function (input) {
+    _input += input;
+});
+
+process.stdin.on("end", function () {
+   processData(_input);
+});

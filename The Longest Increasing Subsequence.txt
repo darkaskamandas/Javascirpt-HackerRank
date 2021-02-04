@@ -1,0 +1,84 @@
+function ZeroArray(length) {
+  return Array.apply(null, new Array(length)).map(Number.prototype.valueOf, 0);
+}
+
+function longFindMaxSubSeq(array) {
+  var maxDict = {};
+
+  var finalMaxLength = 1;
+  for (var i = array.length - 1; i >= 1; i--) {
+
+    var elem = parseInt(array[i]);
+    if (i == array.length - 1) {
+      maxDict[i] = {"len": 1, "firstElem": elem};
+      continue;
+    }
+
+    var maxLength = 1;
+    for (var j = i + 1; j < array.length; j++) {
+      if (j in maxDict && maxDict[j].firstElem > elem) {
+        var iLength = maxDict[j].len + 1
+        maxLength = Math.max(iLength, maxLength);
+        maxDict[i] = {"len": iLength, "firstElem": elem};
+      }
+    }
+
+    finalMaxLength = Math.max(maxLength, finalMaxLength);
+  }
+
+  return finalMaxLength;
+}
+
+function shortFindMaxSubSeq(array, N) {
+  var MIndexArray = new Array(N + 1);
+
+  var L = 0;
+
+  // [2, 7, 4, 3, 8]
+  for (var i = 0; i < N; i++) {
+    // Binary search for the largest positive newL <= L
+    // such that array[MIndexArray[newL]] < array[i]
+    var elem = parseInt(array[i]);
+    var lo = 1;
+    var hi = L;
+    while (lo <= hi) {
+      var mid = parseInt((lo + hi) / 2);
+      var currentLastElem = parseInt(array[MIndexArray[mid]]);
+      if (currentLastElem < elem) {
+        lo = mid + 1;
+      } else {
+        hi = mid - 1;
+      }
+    }
+
+    var newL = lo;
+
+    // stores the index, i, of the smallest value array[i], 
+    // such that there is an increasing subsequence of length
+    // newL ending at array[i]
+    MIndexArray[newL] = i;
+
+    if (newL > L) {
+      L = newL;
+    }
+  }
+
+  return L;
+}
+
+function processData(input) {
+  var array = input.split("\n");
+  var N = array.shift();
+  console.log(shortFindMaxSubSeq(array, N));
+} 
+
+process.stdin.resume();
+process.stdin.setEncoding("ascii");
+_input = "";
+process.stdin.on("data", function (input) {
+    _input += input;
+});
+
+process.stdin.on("end", function () {
+   processData(_input);
+});

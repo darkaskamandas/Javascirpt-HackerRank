@@ -1,0 +1,58 @@
+function processData(input) {
+    var lns = input.split("\n");
+    var nm = lns[0].split(" ");
+    var n = nm[0];
+    var m = nm[1];
+    var A = lns[1].split(" ");//.map( function( num ){ return parseInt( num, 10 ) } );
+    var B = lns[2].split(" ");//.map( function( num ){ return parseInt( num, 10 ) } );
+    var r = LCS(A,B);
+    console.log(r.trim());
+    //console.log(r.join(" "))
+} 
+
+function initC(n,m){
+    var C = [];
+    for(var i=0;i<=n;i++){
+        C[i] = [];
+        for(var j=0;j<=m;j++){
+            C[i][j] = "";
+        }
+    }
+    return C;
+}
+
+function LCS(X,Y){
+    var C = initC(X.length,Y.length);
+    var i,j,a,b;
+    for(i=1;i<=X.length;i++){
+        for(j=1;j<=Y.length;j++){
+            if(X[i-1] == Y[j-1]){
+                C[i][j] = C[i-1][j-1] + " " + X[i-1];
+            }
+            else{
+                a = C[i-1][j];
+                b = C[i][j-1];
+                if(b.length>a.length){
+                    C[i][j] = b;
+                }
+                else{
+                    C[i][j] = a;
+                }
+            }
+        }
+    }
+    
+    return C[X.length][Y.length];
+    
+}
+
+process.stdin.resume();
+process.stdin.setEncoding("ascii");
+_input = "";
+process.stdin.on("data", function (input) {
+    _input += input;
+});
+
+process.stdin.on("end", function () {
+   processData(_input);
+});
