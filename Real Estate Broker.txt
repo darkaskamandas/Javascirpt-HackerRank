@@ -1,0 +1,91 @@
+'use strict';
+
+const fs = require('fs');
+
+process.stdin.resume();
+process.stdin.setEncoding('utf-8');
+
+let inputString = '';
+let currentLine = 0;
+
+process.stdin.on('data', inputStdin => {
+    inputString += inputStdin;
+});
+
+process.stdin.on('end', _ => {
+    inputString = inputString.trim().split('\n').map(str => str.trim());
+
+    main();
+});
+
+function readLine() {
+    return inputString[currentLine++];
+}
+
+function canBuy(graph, cl, seen, matched) {
+    for(const house of graph[cl]) {
+        if(!seen[house]) {
+            seen[house] = true;    
+            if(matched[house] === undefined || canBuy(graph, matched[house], seen,  matched)) {
+                matched[house] = cl;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+/*
+ * Complete the realEstateBroker function below.
+ */
+function realEstateBroker(clients, houses) {
+    const int = []
+    for(const cl of clients) {      
+        const ihouses = []
+        for(let i=0;i<houses.length;i++) {
+            const ho = houses[i]
+            if(cl[0] <= ho[0] && cl[1] >= ho[1]) {
+                ihouses.push(i);
+            }
+            
+        }
+        int.push(ihouses);
+    }
+    const matched = []
+    let result = 0;
+    for(let i = 0 ;i<clients.length;i++) {
+        
+        if(canBuy(int, i, [], matched)) {
+            result++;
+        }
+    }
+    return result;
+}
+
+function main() {
+    const ws = fs.createWriteStream(process.env.OUTPUT_PATH);
+
+    const nm = readLine().split(' ');
+
+    const n = parseInt(nm[0], 10);
+
+    const m = parseInt(nm[1], 10);
+
+    let clients = Array(n);
+
+    for (let clientsRowItr = 0; clientsRowItr < n; clientsRowItr++) {
+        clients[clientsRowItr] = readLine().split(' ').map(clientsTemp => parseInt(clientsTemp, 10));
+    }
+
+    let houses = Array(m);
+
+    for (let housesRowItr = 0; housesRowItr < m; housesRowItr++) {
+        houses[housesRowItr] = readLine().split(' ').map(housesTemp => parseInt(housesTemp, 10));
+    }
+
+    let result = realEstateBroker(clients, houses);
+
+    ws.write(result + "\n");
+
+    ws.end();
+}

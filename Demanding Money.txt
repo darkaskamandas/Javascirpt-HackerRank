@@ -1,0 +1,107 @@
+'use strict';
+
+const fs = require('fs');
+
+process.stdin.resume();
+process.stdin.setEncoding('utf-8');
+
+let inputString = '';
+let currentLine = 0;
+
+process.stdin.on('data', inputStdin => {
+    inputString += inputStdin;
+});
+
+process.stdin.on('end', _ => {
+    inputString = inputString.trim().split('\n').map(str => str.trim());
+
+    main();
+});
+
+function readLine() {
+    return inputString[currentLine++];
+}
+
+/*
+ * Complete the demandingMoney function below.
+ */
+function demandingMoney(money, roads) {
+    /*
+     * Write your code here.
+     */
+    let adj = [];
+    for (let road of roads) {
+        if (!adj[road[0]]) adj[road[0]] = [road[1]];
+        else adj[road[0]].push(road[1]);
+        if (!adj[road[1]]) adj[road[1]] = [road[0]];
+        else adj[road[1]].push(road[0]);
+    }
+    function visit(unvisited, visited = [], bag = 0) {
+        let res = [bag];
+        for (let node of unvisited) {
+            // console.log("checking", node, visited);
+            let vis = Array.from(visited), unv = [], maxn = Math.max(-1, ...visited);
+            if (node <= maxn) continue;
+            vis.push(node);
+            for (let n of unvisited) {
+                if (!(adj[node] && adj[node].indexOf(n) > -1)
+                    && n != node) unv.push(n);
+            }
+            // console.log("visiting", node, unv, unvisited);
+            let visitAll = visit(unv, vis, bag + money[node - 1]);
+            let max = Math.max(bag, ...visitAll, ...res);
+            res = res.concat(visitAll).filter(x => x == max);
+            // console.log("exiting", node, res);
+        }
+        return res;
+    }
+    let houses = money.map((x, i) => i + 1);
+    let neighborhood = Array.from(houses);
+    for (let i = neighborhood.length - 1; i >= 0; i--){
+        if (!adj[i + 1]) continue;
+        let minAdj = Math.min(i + 1, ...adj[i + 1]);
+        let curAdj = adj[i + 1].map(x => neighborhood[x - 1]);
+        neighborhood = neighborhood.map(x=>curAdj.indexOf(x)>-1?minAdj:x);
+    }
+    let nbId = Array.from(new Set(neighborhood));
+    neighborhood = nbId.map(x => neighborhood.
+        map((y, i) => x == y ? i + 1 : -1).filter(y => y > -1));
+    console.log(neighborhood);
+    neighborhood = neighborhood.map(x => visit(x));
+    console.log(neighborhood);
+    let max = neighborhood.reduce((p, c) => p + c[0], 0);
+    let n = neighborhood.reduce((p, c) => p * c.length, 1);
+    return [max,n]
+    // let isolated = houses.filter(x => !adj[x]);
+    // let isolatedNull = isolated.filter(x => money[x - 1] == 0).length;
+    // let isolatedBag = isolated.reduce((p, c) => p + money[c - 1], 0);
+    // houses = houses.filter(x=> adj[x]);
+    // let results = visit(houses);
+    // let max = results.reduce((p,c)=>p>c?p:c,0);
+    // let n = results.filter(x => x == max).length;
+    // return [max + isolatedBag, n*Math.pow(2,isolatedNull)];
+}
+
+function main() {
+    const ws = fs.createWriteStream(process.env.OUTPUT_PATH);
+
+    const nm = readLine().split(' ');
+
+    const n = parseInt(nm[0], 10);
+
+    const m = parseInt(nm[1], 10);
+
+    const money = readLine().split(' ').map(moneyTemp => parseInt(moneyTemp, 10));
+
+    let roads = Array(m);
+
+    for (let roadsRowItr = 0; roadsRowItr < m; roadsRowItr++) {
+        roads[roadsRowItr] = readLine().split(' ').map(roadsTemp => parseInt(roadsTemp, 10));
+    }
+
+    let result = demandingMoney(money, roads);
+
+    ws.write(result.join(" ") + "\n");
+
+    ws.end();
+}

@@ -1,0 +1,106 @@
+'use strict';
+
+process.stdin.resume();
+process.stdin.setEncoding('utf-8');
+
+let inputString = '';
+let currentLine = 0;
+
+process.stdin.on('data', inputStdin => {
+    inputString += inputStdin;
+});
+
+process.stdin.on('end', _ => {
+    inputString = inputString.replace(/\s*$/, '')
+        .split('\n')
+        .map(str => str.replace(/\s*$/, ''));
+
+    main();
+});
+
+function readLine() {
+    return inputString[currentLine++];
+}
+
+function findTollCosts (roadNodes, roadEdges, roadFrom, roadTo, roadWeights) {
+    // Array contianing each pair with cost d
+    const paths = [];
+    for (let i = 0; i < 10; ++i) {
+        paths.push(new Set());
+    }
+
+    // Used for finding all d for any path i-j
+    const costsInPath = [];
+    for (let i = 0; i < roadNodes; ++i) {
+        const _ = [];
+        for (let j = 0; j < roadNodes; ++j) {
+            _.push(new Set());
+        }
+        costsInPath.push(_);
+    }
+
+    // Zero-index nodes
+    roadFrom = roadFrom.map(x => x - 1);
+    roadTo = roadTo.map(x => x - 1);
+
+    const addPath = (i, j, w) => {
+        paths[w].add(`${i}-${j}`);
+        costsInPath[i][j].add(w);
+    }
+
+    for (let road = 0; road < roadEdges; ++road) {
+        const i = roadFrom[road];
+        const j = roadTo[road];
+        const w = roadWeights[road] % 10;
+        addPath(i, j, w);
+        addPath(j, i, w && 10-w);
+    }
+
+    let changed = false;
+    do {
+        changed = false;
+        for (let i = 0; i < roadNodes; ++i) {
+            for (let j = 0; j < roadNodes; ++j) {
+                if (i === j) continue;
+                const ij = costsInPath[i][j];
+                for (let k = 0; k < roadNodes; ++k) {
+                    if (i === k || j === k) continue;
+                    const ik = costsInPath[i][k];
+                    const kj = costsInPath[k][j];
+                    const _ij = new Set(ij);
+                    ik.forEach(cik => {
+                        kj.forEach(ckj => {
+                            _ij.add((cik + ckj) % 10);
+                        })
+                    })
+                    if (_ij.size !== ij.size) {
+                        changed = true;
+                        _ij.forEach(w => addPath(i, j, w));
+                    }
+                }
+            }
+        }
+    } while (changed);
+
+    paths.forEach(d => console.log(d.size));
+}
+
+function main() {
+    const roadNodesEdges = readLine().split(' ');
+    const roadNodes = parseInt(roadNodesEdges[0], 10);
+    const roadEdges = parseInt(roadNodesEdges[1], 10);
+
+    let roadFrom = [];
+    let roadTo = [];
+    let roadWeight = [];
+
+    for (var i = 0; i < roadEdges; i++) {
+        const roadFromToWeight = readLine().split(' ');
+
+        roadFrom.push(parseInt(roadFromToWeight[0], 10));
+        roadTo.push(parseInt(roadFromToWeight[1], 10));
+        roadWeight.push(parseInt(roadFromToWeight[2], 10));
+    }
+
+    findTollCosts(roadNodes, roadEdges, roadFrom, roadTo, roadWeight);
+}
