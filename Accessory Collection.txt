@@ -1,0 +1,121 @@
+'use strict';
+
+const fs = require('fs');
+
+process.stdin.resume();
+process.stdin.setEncoding('utf-8');
+
+let inputString = '';
+let currentLine = 0;
+
+process.stdin.on('data', inputStdin => {
+    inputString += inputStdin;
+});
+
+process.stdin.on('end', _ => {
+    inputString = inputString.trim().split('\n').map(str => str.trim());
+
+    main();
+});
+
+function readLine() {
+    return inputString[currentLine++];
+}
+
+/*
+ * Complete the acessoryCollection function below.
+ */
+function acessoryCollection(L, A, N, D) {
+    /*
+     * Write your code here.
+     */
+    if(D > A) {
+        return 'SAD';
+    }
+    
+    if (D === 1) {
+        return L * A
+    }
+    
+  
+    let s = (D - 2)*(D - 1)
+    let q = 1 + L - N
+    let t = 1 + A - D;
+    
+    let minInt = (...args) => Math.floor(Math.min(...args));
+    let maxInt = (...args) => Math.floor(Math.max(...args));
+    
+    let b = minInt(s > 0 ? q / Math.sqrt(s) : Infinity, (N-1) / (D-1));
+    
+    let left = [3, 4].includes(D) && A > 2;
+    let right = D > 4 && A > D - 2; 
+    
+    if (left || right) {
+        b = maxInt(q / (1 + t), b);
+    } 
+    
+    if (D === 3 || A > D - 1){
+        b = maxInt(q / t, b);
+    } else if( D > 3 && A < D - 1){
+        b = minInt(q / t, b);
+    }
+  
+    let sumGroup = (group) => {
+        if(group <= 0){
+            return -1;
+        }
+        
+        let k = N - 1 - group * (D - 2)
+        let r = Math.floor((L - k) / group)
+        
+        if (k < group || A - r <= 0 || group * (A - 1) < L - k) {
+            return -1
+        }
+        
+        let head = k * A
+        let body = r * group * (2 * (A - 1) - r + 1) / 2
+        let tail = (A - r - 1) * (L - k - r * group)
+        
+        return head + body + tail
+    }
+   
+   // b was originally b.xxxxx..., but was casted to integer
+   // so the solution could be b, or b + 1;
+   let result = Math.max(sumGroup(b), sumGroup(b+1));
+    // 86643486623379
+    // 86642950964310 -> expected
+   if(result < 0){
+       return 'SAD';
+   }
+   
+     if (D === 2) {
+        return Math.min(result, L * (A + (A - N + 1)) / 2)
+    }
+
+   
+   return result;
+}
+
+function main() {
+    const ws = fs.createWriteStream(process.env.OUTPUT_PATH);
+
+    const T = parseInt(readLine(), 10);
+
+    for (let TItr = 0; TItr < T; TItr++) {
+        const LAND = readLine().split(' ');
+
+        const L = parseInt(LAND[0], 10);
+
+        const A = parseInt(LAND[1], 10);
+
+        const N = parseInt(LAND[2], 10);
+
+        const D = parseInt(LAND[3], 10);
+
+        let result = acessoryCollection(L, A, N, D);
+
+        ws.write(result + "\n");
+    }
+
+    ws.end();
+}
