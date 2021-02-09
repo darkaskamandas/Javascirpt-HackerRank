@@ -1,0 +1,121 @@
+
+(function() {
+	
+var __modules = {},
+	
+	__modulesCache = {},
+	
+	__moduleIsCached = {};
+
+function __require(uid, parentUid) {
+	if(!__moduleIsCached[uid]) {
+		
+		__modulesCache[uid] = {"exports": {}, "loaded": false};
+		__moduleIsCached[uid] = true;
+		if(uid === 0) {
+			require.main = __modulesCache[0];
+		} else {
+			__modulesCache[uid].parent = __modulesCache[parentUid];
+		}
+		
+		
+		__modules[uid](__modulesCache[uid], __modulesCache[uid].exports);
+		__modulesCache[uid].loaded = true;
+	}
+	return __modulesCache[uid].exports;
+}
+
+function __getFilename(path) {
+	return require("path").resolve(__dirname + "/" + path);
+}
+
+function __getDirname(path) {
+	return require("path").resolve(__dirname + "/" + path + "/../");
+}
+
+
+__modules[0] = function(module, exports) {
+var input = __require(1,0);
+
+input.read().on("end", function() {
+	var [n, m] = input.readNumberArray();
+	var d = Math.ceil(Math.ceil((n-1)/2)/Math.ceil(m/2));
+	
+	if(m==1){b
+		console.log(1);
+	}
+	else{
+		console.log(d);
+	}
+
+	for(var i=0; i<n; i++){
+		var s=[];
+		for(var j=1; j<=Math.ceil(m/2); j++){
+			s.push(mod(i+j,n));
+		}
+		for(var j=1; j<=Math.floor(m/2); j++){
+			s.push(mod(i-j,n));
+		}
+		console.log(s.join(" "));
+	}
+});
+
+function mod(n, m){
+	return ((n%m)+m)%m;
+}
+
+return module.exports;
+}
+
+
+__modules[1] = function(module, exports) {
+
+
+var currentline = 0;
+var _input;
+
+function read() {
+    process.stdin.resume();
+    process.stdin.setEncoding("ascii");
+    _input = "";
+    process.stdin.on("data", function(input) {
+        _input += input;
+    });
+
+    process.stdin.on("end", function() {
+        _input = _input.split("\n");
+    });
+
+    return process.stdin;
+}
+
+function readLine() {
+    return _input[currentline++].trim();
+}
+
+function readInt() {
+    return parseInt(readLine());
+}
+
+function readStringArray() {
+    return readLine().split(" ");
+}
+
+function readNumberArray() {
+    return readStringArray().map(Number);
+}
+
+module.exports = {
+    read: read,
+    readLine: readLine,
+    readInt: readInt,
+    readStringArray: readStringArray,
+    readNumberArray: readNumberArray
+};
+
+return module.exports;
+}
+
+
+module.exports = __require(0);
+})();

@@ -1,0 +1,58 @@
+'use strict';
+
+const fs = require('fs');
+
+process.stdin.resume();
+process.stdin.setEncoding('utf-8');
+
+let inputString = '';
+let currentLine = 0;
+
+process.stdin.on('data', inputStdin => {
+    inputString += inputStdin;
+});
+
+process.stdin.on('end', _ => {
+    inputString = inputString.replace(/\s*$/, '')
+        .split('\n')
+        .map(str => str.replace(/\s*$/, ''));
+
+    main();
+});
+
+function readLine() {
+    return inputString[currentLine++];
+}
+
+// Complete the airports function below.
+function airports(d, x) {
+    // console.log(d,x)
+    for(let i = 0; i < x.length; i++) {
+        // console.log(x[i])
+    }
+    return [0, 1, 1, 2]
+}
+
+function main() {
+    const ws = fs.createWriteStream(process.env.OUTPUT_PATH);
+
+    const q = parseInt(readLine(), 10);
+    console.log(q)
+
+    for (let qItr = 0; qItr < q; qItr++) {
+        const nd = readLine().split(' ');
+
+        const n = parseInt(nd[0], 10);
+
+        const d = parseInt(nd[1], 10);
+
+        const x = readLine().split(' ').map(xTemp => parseInt(xTemp, 10));
+
+        console.log(d,x)
+        let result = airports(d, x);
+
+        ws.write(result.join(" ") + "\n");
+    }
+
+    ws.end();
+}

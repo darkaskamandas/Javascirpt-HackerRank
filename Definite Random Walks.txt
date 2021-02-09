@@ -1,0 +1,162 @@
+process.stdin.resume();
+process.stdin.setEncoding('ascii');
+
+var input_stdin = "";
+var input_stdin_array = "";
+var input_currentline = 0;
+
+process.stdin.on('data', function (data) {
+    input_stdin += data;
+});
+
+process.stdin.on('end', function () {
+    input_stdin_array = input_stdin.split("\n");
+    main();    
+});
+
+function readLine() {
+    return input_stdin_array[input_currentline++];
+}
+
+/////////////// ignore above this line ////////////////////
+
+const MODULO_M = 998244353;
+
+/**
+ * Normalizes probabilities by dividing each one per MODULO_M value.
+ * (the rational number modulo M)
+ *
+ * @param {Array.<number>} ps array of probabilities.
+ * @returns {Array.<number>} array of normalized probabilities.
+ */
+function normProbabilities(ps) {
+    return ps.map(p => p / MODULO_M);
+}
+
+/**
+ * Computes index of chip after (n) jumps.
+ * 2 >3< 2 4: field 2 has index 1 and jumps to field 3 which has index 2
+ *
+ * @param {number} n number of jumps to perform.
+ * @param {Array.<number>} f array of fields.
+ * @param {number} fi current index of the chip.
+ * @returns {number} index of next field where the chip should jump.
+ */
+function jump(n, f, fi) {
+    let rfi = fi;
+
+    for (; n!==0; n--) {
+        rfi = f[rfi] - 1;
+    }
+
+    return rfi;
+}
+
+/**
+ * src: https://stackoverflow.com/questions/26985808/calculating-the-modular-inverse-in-javascript
+ * @param {number} a
+ * @param {number} b
+ * @returns {Array.<number>}
+ */
+function modInverse(a, b) {
+
+    if (b === 0) {
+        return [1, 0];
+    }
+
+    tmp = modInverse(b, a % b);
+
+    x = tmp[0];
+    y = tmp[1];
+
+    return [y, x - y * Math.floor(a / b)];
+}
+
+
+function main() {
+    /*
+    4 5 1
+    2 3 2 4
+    332748118 332748118 332748118 0 0
+    */
+    var n_temp = readLine().split(' ');
+    var n = parseInt(n_temp[0]); // 4
+    var m = parseInt(n_temp[1]); // 5
+    var k = parseInt(n_temp[2]); // 1
+    f = readLine().split(' ');
+    f = f.map(Number);
+    p = readLine().split(' ');
+    p = p.map(Number);
+    // your code goes here
+
+// placing chip at a position in a field randomly and with equiprobability
+    let Pi = 1 / n;
+    let outcomes = {}; // Fi -> PfFi (probability that the chip will be on field  after  turns)
+    let res = {};
+    const pNorm = normProbabilities(p);
+
+    // for each turn compute possible outcomes for a given entry Field (j)
+    for (let j=0; j < n; j++) {
+        // iteration per turn (k)
+        let currField = j;
+        for (let ki=0; ki < k; ki++) {
+            // iterate per each possible d result (0..m-1) within each k turn
+            for (let d=0; d < m; d++) {
+                if (pNorm[d] !== 0) { // no need to run through when event is impossible
+                    let currField = j;
+                    let dCountDown = d;
+
+                    currField = jump(dCountDown, f, currField);
+
+                    // probability to had transit to currentField
+                    const probToEndOnCurrField = ki === 0 ? (Pi * pNorm[d]) : pNorm[d];
+
+                    if (outcomes[currField]) {
+                        if (outcomes[currField][ki]) {
+                            if (outcomes[currField][ki][d]) {
+                                const tmp = outcomes[currField][ki][d];
+
+                                outcomes[currField][ki][d] = tmp + probToEndOnCurrField;
+                            } else {
+                                outcomes[currField][ki][d] = probToEndOnCurrField;
+                            }
+                        } else {
+                            outcomes[currField][ki] = {};
+                            outcomes[currField][ki][d] = probToEndOnCurrField;
+                        }
+                    } else {
+                        outcomes[currField] = {};
+                        outcomes[currField][ki] = {};
+                        outcomes[currField][ki][d] = probToEndOnCurrField;
+                    }
+                }
+            }
+        }
+    }
+
+    // compute response
+    Object.keys(outcomes).forEach(k => {
+        Object.keys(outcomes[k]).forEach(ki => {
+            Object.keys(outcomes[k][ki]).forEach(kii => {
+                res[k] = res[k] || {};
+                res[k][ki] = res[k][ki] || 0;
+                res[k][ki] += outcomes[k][ki][kii];
+            });
+        });
+    });
+    Object.keys(res).forEach(k => {
+        let resK = 1;
+        Object.keys(res[k]).forEach(ki => {
+            resK *= res[k][ki];
+        });
+        res[k] = resK;
+    });
+    // print response in module M
+    Object.keys(res).map(k => res[k]).forEach(v => {
+        const a = Math.round(1/v);
+        const r = modInverse(a, MODULO_M)[0];
+        const rNorm = r < 0 ? (r + MODULO_M) : r;
+
+        console.log(rNorm);
+    });   
+}
