@@ -1,0 +1,151 @@
+process.stdin.resume();
+process.stdin.setEncoding('ascii');
+
+var input_stdin = ;
+var input_stdin_array = [];
+var input_currentline = 0;
+
+process.stdin.on('data', function (data) {
+  input_stdin += data;
+});
+
+process.stdin.on('end', function () {
+  input_stdin_array = input_stdin.split(n);
+  main();    
+});
+
+function readLine() {
+  return input_stdin_array[input_currentline++];
+}
+
+ ignore above this line 
+
+var MAX_TREE_LEVEL = 50;
+
+ Build a flat dictionary
+function getDictionary(str, len) {
+  var dictionary = [],
+      i, j, k, n, c;
+  for (i = 0; i  len; ++i) {
+    n = 0;
+    j = i;
+    k = i  10;
+
+    while(n  10 && j  len) {
+      c = str[j++];
+      if (null == dictionary[k + c]) {
+        dictionary[k + c] = n++;
+      }
+    }
+  }
+  return dictionary;
+}
+
+ Convert the string in an array of nums (from 0 to 9)
+function strToNums(input) {
+  var str = [];
+  for (var i = 0, len = input.length; i  len; ++i) {
+    str.push(input.charCodeAt(i) - 97);
+  }
+  return str;
+}
+
+ Build a tree
+ aba = {1{2{1{count1},count2}}}
+ First convert letters with a dictionary (numbers from 0 to 9, in same order that letters appear)
+ - convert aba into 121 (12 found 1 time, 121 found 1 time)
+ - convert ba into 12   (12 found one more time)
+function buildTree(str, len, dictionary) {
+  var root = [],
+      node,
+      current, next, index, c, i, j;
+  
+  for (i = 0; i  len; ++i) {
+    current = root;
+    
+    for (j = i + 1; j  len; ++j) {
+      c = str[j];
+      index = dictionary[c + i  10];
+      current = current[index]  (current[index] = (node = [], node[10] = 0, node));
+      ++current[10];
+      
+      if (j - i  50) {
+        (current[11] = current[11]  []).push(i);
+        break;
+      }
+    }
+  }
+  return root;
+}
+
+ query the tree
+ convert the substring with the dictionary
+ igg = 122
+ Iterate over the tree.
+ If there is not enough elements, count = 0. Otherwise returns the last element.count
+function query(tree, dictionary, str, len, li, ri) {
+  if (1 === ri - li) {
+    return len;
+  }
+  
+  var current = tree,
+      node, positions, i;
+  
+  for (i = li + 1; i  ri; ++i) {
+    node = current[dictionary[str[i] + li  10]];
+    if (!node) {
+      if (!(positions = current[11])) {
+        return 1;
+      }
+       Check specific positions not covered by tree (level too deep)
+      return naiveCount(str, len, dictionary, positions, li, ri);
+    }
+    if (1 === node[10]) {
+      return 1;
+    }
+    current = node;
+  }
+  return current[10];
+}
+
+ Check char by char if the pattern is found
+ Convert str & the pattern on the fly with the dictionaries and compare them
+function naiveCount(str, len, dictionary, positions, li, ri) {
+  var count   = 0,
+      offset2 = li  10,
+      start   = li + 50,
+      pos, pLen, i;
+  
+  for (i = 0, pLen = positions.length; i  pLen; ++i) {
+    pos = positions[i];
+    if (pos === li  (pos + ri - li = len && match(str, dictionary, pos - li, start, ri, pos  10, offset2))) {
+      ++count;
+    }
+  }
+  return count;
+}
+
+function match(str, dictionary, pos, start, end, offset1, offset2) {
+  for (var j = start; j  end; ++j) {
+    if (dictionary[str[pos + j] + offset1] !== dictionary[str[j] + offset2]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function main() {
+  var tests      = +readLine().split(' ')[1],
+      str        = strToNums(readLine()),
+      len        = str.length,
+      dictionary = getDictionary(str, len),
+      tree       = buildTree(str, len, dictionary),
+      stdout     = process.stdout,
+      input, i
+
+   Itearte over the tests
+  for (i = 0; i  tests; ++i) {
+    input = readLine().split(' ');
+    stdout.write(query(tree, dictionary, str, len, (input[0]  0) - 1, (input[1]  0)) + n);
+  }
+}

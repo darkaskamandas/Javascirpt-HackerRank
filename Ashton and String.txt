@@ -1,69 +1,148 @@
-var fs = require('fs');
-
-	
-function getc(s, k){
-	var t = {};
-	var sum = 0;
-	var done = false;
-	var lastch = '';
-	
-	function suffArray(s) {
-		var sarr =[];
-		
-		for (var i=0; i< s.length; i++) sarr.push(i);
-		
-		sarr.sort(function compare(a,b) {
-			while(true){
-				if (s[a] < s[b]) return -1;
-				if (s[a] > s[b]) return 1;
-				a++; b++;
-				if ((a==b) && (a == s.length-1)) return 0;
-				if (a > s.length-1) return -1;
-				if (b > s.length-1) return 1;
-			}
-		});
-		return sarr;
-	}
-	
-	function add(s, index){ // add substring starting at i
-		var node = t, depth = 0, i = index;
-		while (i < s.length){
-			if (s[i] in node) {
-				node = node[s[i]];
-				depth++; i++;
-			} else {
-				depth++; 
-				node[s[i]] = {};
-				node = node[s[i]];
-				sum += depth;
-				if (sum >= k) { // found it
-					done = true;
-					lastch = s[i - sum + k];
-					return true;
-				}
-				i++;
-			}
-		}
-		return false;
-	}
-	
-	var sa = suffArray(s);
-	
-	for (var i of sa) {
-		if (add(s, i)) break;
-	};
-	
-	return lastch;
-	
-}
 
 function processData(input) {
-	input = input.split('\n');
-	var T = Number(input[0]);
-	for (var i=0; i < T; i++) {
-		console.log(getc(input[i*2+1], Number(input[i*2+2])));
-	}
+    input = input.split("\n");
+    var read = 0;
+    var tests = input[read++];
+
+    for(var test=0; test<tests; test++) {
+      word = input[read++];
+      k = input[read++];
+      
+      run_test_case(word,k);      
+    }
+}
+
+function run_test_case(s, k) {
+    var A = s;
+    var index = 0;
+
+    var object = calculateSuffixArrayLCPAndIntervals(A);
+    var response = search_character(object.suffix_array, object.intervals, k, A, object.lcp_array);    
+    console.log(response);
 } 
+
+function findIndex(a, start, end, target) {
+  var mid;
+  while (start <= end) {
+    mid = Math.floor((start + end) / 2);
+    if (target == a[mid]) {
+      return mid;
+    } else if (target < a[mid]) {
+      end = mid - 1;
+    } else {
+      start = mid + 1;
+    }
+  }
+  return start;
+}
+    
+function search_character(suffixes, intervals, k, A, lcp_array) {
+  var response;
+  var index = findIndex(intervals, 0, intervals.length - 1, k);
+
+  if (index > intervals.length - 1) {
+    response = "INVALID";
+  } else {
+
+    var begin = intervals[index-1];
+    var char_pos = k - begin;
+
+    var current = A.substring(suffixes[index - 1], A.length);
+
+    var lcp = lcp_array[index-1];
+    var substrings = current.length - lcp;
+    var string_interval = [0];
+    for(var i=0; i<substrings; i++) {
+      string_interval.push(current.length-substrings+i+1 + string_interval[string_interval.length-1]);
+    }
+
+    var char_index = findIndex(string_interval, 0, string_interval.length-1, char_pos);
+
+    var current_substring = current.substring(0, current.length-substrings+char_index);
+    //console.log(current_substring);
+    //console.log(char_pos);
+    var current_pos = char_pos - string_interval[char_index-1]; 
+    response = current_substring[current_pos-1];
+  }
+  return response;
+}
+
+///**********
+
+
+function calculateSuffixArrayLCPAndIntervals(A) {
+  var MAXLG = 17;
+  var N = A.length;
+  var P = [];
+  P.push([]);
+
+  for(var i=0; i<N; i++) {
+    P[0][i] = A[i].charCodeAt(0) - 'a'.charCodeAt(0);   
+  }
+  var L = [];
+
+  var step = 1;
+  var count = 1;
+  var maximum_prefix_size = A.length;
+  for(step=1,count=1; count >> 1 < maximum_prefix_size; step++, count <<= 1) {
+    P.push([]);
+    for(var i=0; i<N; i++) {
+      var nr0 = P[step-1][i];
+      var nr1 = i + count < N ? P[step-1][i+count]:-1;
+      var p = i;
+      L[i] = { nr0: nr0, nr1: nr1, p:p };
+    }
+
+    L.sort(function(a,b) { return a.nr0==b.nr0 ? ( a.nr1<b.nr1 ? -1 : 1) : (a.nr0 < b.nr0) ? -1 : 1 });
+
+    for(var i=0; i<N; i++) {
+      P[step][L[i].p] = i > 0 && L[i].nr0 == L[i-1].nr0 && L[i].nr1 == L[i-1].nr1 ? P[step][L[i-1].p] : i;
+    }
+  }
+  
+  suffix_array = []
+  for(var i=0; i<N; i++) {
+    suffix_array.push( L[i].p );
+  }
+        
+  //L has the ordered indexes, create lcp for consecutive pairs with it
+  var lcp_array = [0]
+  for(var i=1; i<N; i++) {
+    lcp_array.push(lcp(L[i-1].p,L[i].p,P,step,N));
+  }
+  
+  var intervals = characters_intervals(A, suffix_array,lcp_array);
+
+  return { suffix_array: suffix_array, string: A, lcp_array: lcp_array, intervals: intervals }
+}
+
+function lcp(x,y,P,step,N) {
+  var k = 0;
+  var ret = 0;
+  if(x==y) return N-x;
+  for(k=step-1; k>=0 && x<N && y<N; k--) 
+    if(P[k][x] == P[k][y]) 
+      x+=1 << k, y+=1 << k, ret += 1 << k;
+  return ret;
+}
+
+function characters_intervals(A, suffix_array, lcp_array) {
+ 
+  var intervals = [ 0 ];
+
+  for(var i=0; i<lcp_array.length; i++) {
+    var size_of_suffix = A.length - suffix_array[i];
+    var substrings = size_of_suffix - lcp_array[i];
+    var ap = (substrings-1 > 0) ? ((substrings-1)*(1+(substrings-1)))/2 : 0;
+    var characters = ( size_of_suffix * substrings ) - ap;
+    var interval = intervals[intervals.length-1] + characters;
+    intervals.push(interval);
+  }
+
+  return intervals;
+}
+
+
 
 process.stdin.resume();
 process.stdin.setEncoding("ascii");
