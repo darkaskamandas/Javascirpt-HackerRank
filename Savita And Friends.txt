@@ -1,0 +1,110 @@
+function processData(input) {
+    let D = [];
+    for (let i = 0; i < input.length; ) {
+        let c, d = 0;
+        while ((c = input.charCodeAt(i++)) >= 48 && c <= 57)
+            d = 10*d + c-48;
+        D.push(d);
+    }
+    for (let i = 0, t = D[i++]; t; t--) {
+        let n = D[i++], m = D[i++], k = D[i++]-1;
+            let N = [], K;
+            for (let j = 0; j < n; j++)
+                N.push([]);
+            for (let j = 0; j < m; j++) {
+                let a = D[i++]-1, b = D[i++]-1, d = D[i++];
+                if (j != k) {
+                    N[a].push([b, d]);
+                    N[b].push([a, d]);
+                } else
+                    K = [a, b, d];
+            }
+            test(N, K);
+    }
+}
+
+function test(N, K) {
+    let M = i => {
+        let M = new Map(new Array(N.length).fill().map((_, j) => [j, j == i ? 0 : 1/0])), S = new Set([i]), H = [i], K = new Array(N.length).fill(null);
+        K[i] = 0;
+        let t = (i, j) => {
+            let s = K[H[i]], t = H[i];
+            K[H[i]] = K[H[j]];
+            K[H[j]] = s;
+            H[i] = H[j];
+            H[j] = t;
+        }, A = i => {
+            if (K[i] == null) {
+                H.push(i);
+                K[i] = H.length-1;
+            }
+            let j = K[i], k;
+            while ((k = Math.floor((j-1)/2)) >= 0) {
+                if (M.get(H[j]) < M.get(H[k]))
+                    t(j, k);
+                j = k;
+            }
+        }, R = () => {
+            if (H.length == 1) {
+                K[H[0]] = null;
+                return H.pop();
+            }
+            let r = H[0];
+            K[r] = null;
+            H[0] = H.pop();
+            K[H[0]] = 0
+            let j = i;
+            while (2*j+1 < H.length)
+                if (M.get(H[j]) > M.get(H[2*j+1]))
+                    if (2*j+1 != H.length && M.get(H[2*j+2]) < M.get(H[2*j+1]))
+                        t(j, j = 2*j+2);
+                    else
+                        t(j, j = 2*j+1);
+                else if (2*j+1 != H.length && M.get(H[j]) > M.get(H[2*j+2]))
+                    t(j, j = 2*j+2);
+                else break;
+            return r;
+        }
+        while (S.size) {
+            let s = R();
+            S.delete(s);
+            for (let [j, d] of N[s])
+                if (M.get(s) + d < M.get(j)) {
+                        M.set(j, M.get(s) + d);
+                        S.add(j);
+                        A(j);
+                    }
+        }
+        return M;
+    }
+    let [a, b, d] = K, A = M(a), B = M(b), C = new Map(), D = new Map();
+    for (let i = 0; i < N.length; i++) {
+        C.set(i, Math.min(A.get(i), B.get(i) + d));
+        D.set(i, Math.min(A.get(i) + d, B.get(i)))
+    }
+    let L = new Array(N.length).fill().map((_, i) => i).sort((i, j) => C.get(j) - C.get(i)), l = L[0], s = 0, t = C.get(l);
+    for (let i = 1; i < N.length; i++)
+        if (D.get(L[i]) > D.get(l)) {
+            if ((D.get(l) + d + C.get(L[i]))/2 < t) {
+                t = (D.get(l) + d + C.get(L[i]))/2;
+                s = (D.get(l) + d - C.get(L[i]))/2
+            }
+            l = L[i];
+        }
+    if (D.get(l) < t) {
+        t = D.get(l);
+        s = d;
+    }
+    console.log(s.toFixed(5), t.toFixed(5));
+}
+
+process.stdin.resume();
+process.stdin.setEncoding("ascii");
+_input = "";
+process.stdin.on("data", function (input) {
+    _input += input;
+});
+
+process.stdin.on("end", function () {
+   processData(_input);
+});

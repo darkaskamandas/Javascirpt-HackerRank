@@ -1,0 +1,145 @@
+function processData(input) {
+    //Enter your code here
+    
+    
+    lines = input.split("\n");
+    
+    numTests = parseInt(lines.shift());
+    
+    for (i=0; i<numTests; i++)
+        {
+            graphSize = parseInt(lines.shift());
+            
+            if (graphSize < 3)
+                {
+                    console.log("1");
+                }
+            else
+                {
+            
+            degree = [];
+            leavesAdjacent = [];
+            mainRoad = []
+            edges = [];
+            
+            for (j=0; j<graphSize; j++)
+                {
+                    degree[j] = 0;
+                    leavesAdjacent[j] = 0;
+                    mainRoad[j] = 0;
+                }
+            
+            for (j=1; j<graphSize; j++)
+                {
+                    edgeStr = lines.shift();
+                    nodes = edgeStr.split(" ").map(Number)
+                    
+                    edges[j-1] = nodes;
+                    
+                    
+                    
+                    degree[nodes[0]] ++;
+                    degree[nodes[1]] ++;
+                    
+                }
+            
+            for (j=1; j<graphSize; j++)
+            {
+                nodes = edges[j-1];
+                
+                
+                if (degree[nodes[0]] == 1)
+                    {
+                        leavesAdjacent[nodes[1]] ++;
+                        mainRoad[nodes[1]] = 1;
+                    }
+                    
+                if (degree[nodes[1]] == 1)
+                    {
+                        leavesAdjacent[nodes[0]] ++;
+                        mainRoad[nodes[0]] = 1;
+                    }
+                
+            }
+                   
+                    /*
+            console.log(degree);
+            console.log(leavesAdjacent);
+            console.log(mainRoad);        
+            console.log(edges);        
+                    */
+            innerStarNodes = 0;
+            mainRoadNodes = 0;
+            for (j=0; j<graphSize; j++)
+                {
+                 //   console.log(j + " deg:" + degree[j] + "  leaves:" + leavesAdjacent[j] + "  star:" + innerStarNodes);
+                    
+                    if (degree[j] -leavesAdjacent[j] > 2)
+                        {
+                            innerStarNodes ++;
+                        }
+                    
+                    if (degree[j]>1)
+                        {
+                            mainRoadNodes++;
+                        }
+                }
+                    
+            if (innerStarNodes > 0 )
+                {
+                    console.log("0");
+                }
+            else
+                {
+                    prod = 1;
+
+                    if(mainRoadNodes > 1)
+                        {
+                            prod = 2;
+                        }
+                    
+                    for (j=0; j<graphSize; j++)
+                        {
+                            if (leavesAdjacent[j] > 0)
+                                {
+                                    for (k=2; k<=leavesAdjacent[j]; k++)
+                                        {
+                                            prod = (prod * k)%1000000007;
+                                        }
+                                }
+                            
+                            
+                            
+                        }
+                    
+                    console.log(prod);
+                    
+                    
+                    
+                    
+                    
+                    
+                }
+            
+            
+            
+            }
+            
+            
+            
+        }
+    
+    
+    
+} 
+
+process.stdin.resume();
+process.stdin.setEncoding("ascii");
+_input = "";
+process.stdin.on("data", function (input) {
+    _input += input;
+});
+
+process.stdin.on("end", function () {
+   processData(_input);
+});
