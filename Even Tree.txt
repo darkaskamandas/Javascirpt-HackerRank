@@ -1,0 +1,76 @@
+function processData(input) {
+  var vertices = [];
+  var edges = {};
+
+  function connect_(a, b) {
+    if (!edges[a]) {
+      edges[a] = [];
+      vertices.push(a);
+    }       
+    edges[a].push(b);
+  }
+
+  function connect(a, b) {
+    connect_(a, b);
+    connect_(b, a);
+  }
+
+  function disconnect_(a, b) {
+    edges[a].splice(edges[a].indexOf(b), 1);
+  }
+
+  function disconnect(a, b) {
+    disconnect_(a, b);
+    disconnect_(b, a);
+  }
+
+  var lines = input.split('\n');
+  var V, E;
+  var VELine = lines.shift().split(' ');
+  V = parseInt(VELine.shift(), 10);
+  E = parseInt(VELine.shift(), 10);
+
+  for (var i = 0; i < E; i++) {
+    var line = lines.shift().split(' ');
+    var a = parseInt(line.shift(), 10);
+    var b = parseInt(line.shift(), 10);
+    connect(a, b);
+  }
+
+  var sum = 0;
+  var queue = [1];
+  var list = [];
+
+  while (queue.length) {
+    var vertex = queue.shift();
+    var node = edges[vertex];
+
+    if (node.visited) {
+      continue;
+    }
+
+    list.unshift(vertex);
+    node.visited = true;
+    [].push.apply(queue, node);
+  }
+  
+  list.forEach(function (vertex) {
+    var node = edges[vertex];
+    if (node.length % 2 === 0) {
+      sum++;
+      disconnect(vertex, node[0]);
+    }
+  });
+  console.log(sum);
+}
+
+process.stdin.resume();
+process.stdin.setEncoding("ascii");
+_input = "";
+process.stdin.on("data", function (input) {
+    _input += input;
+});
+
+process.stdin.on("end", function () {
+   processData(_input);
+});

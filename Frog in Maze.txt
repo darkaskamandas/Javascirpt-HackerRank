@@ -1,0 +1,176 @@
+process.stdin.resume();
+process.stdin.setEncoding('ascii');
+
+var input_stdin = "";
+var input_stdin_array = "";
+var input_currentline = 0;
+
+process.stdin.on('data', function (data) {
+    input_stdin += data;
+});
+
+process.stdin.on('end', function () {
+    input_stdin_array = input_stdin.split("\n");
+    main();    
+});
+
+function readLine() {
+    return input_stdin_array[input_currentline++];
+}
+
+/////////////// ignore above this line ////////////////////
+
+const get_neighbor_probabilities = (node) => {
+    var traversable_neighbors = node.neighbors.length;
+    if(node.type === "*" || node.type === "%" || node.type === "#" || traversable_neighbors === 0) return 0;
+    return 1/traversable_neighbors;
+}
+
+const create_simple_probability_map = (graph) => {
+    var simple_prob_map = []
+    for(var i = 0; i < graph.length; i++) {
+        simple_prob_map.push([]);
+        for(var j = 0; j < graph[i].length; j++) {
+            simple_prob_map[i].push(get_neighbor_probabilities(graph[i][j]));
+        }
+    }
+    return simple_prob_map;
+}
+
+const get_neighbor = (x, y, graph) => {
+    var neighbor = false;
+            if(x < graph.length && x >= 0 && y < graph[x].length && y >= 0) {
+                neighbor = graph[x][y];
+            }
+    return neighbor;
+}
+
+const create_multi = (x, y) => {
+    var ret = [];
+    for(var i = 0; i < x; i++) {
+        ret.push([])
+        for(var j = 0; j < y; j++) {
+            ret[i].push(0);
+        }
+    }
+    return ret;
+}
+
+function main() {
+    var n_temp = readLine().split(' ');
+    var n = parseInt(n_temp[0]);
+    var m = parseInt(n_temp[1]);
+    var k = parseInt(n_temp[2]);
+    
+    let graph = [];
+    var starting_pos = [];
+    var exits = [];
+    
+    for(var a0 = 0; a0 < n; a0++){
+        var row = readLine();
+        // Write Your Code Here
+        graph.push([]);
+        for(var a1 = 0; a1 < row.length; a1++) {
+            graph[a0].push({type: row[a1], neighbors: [], tunnel: [], x: a0, y: a1});
+            if(row[a1] === 'A') {
+                graph[a0][a1].type = 'O';
+                starting_pos.push(a0);
+                starting_pos.push(a1);
+            }
+            if(row[a1] === '%') {
+                exits.push([a0, a1]);
+            }
+        }
+    }
+    
+    for(var i = 0; i < graph.length; i++) {
+        for(var j =0; j < graph[i].length; j++) {
+            let node = graph[i][j];
+            var n1 = get_neighbor(i-1,j,graph);
+            if(n1 && n1.type !== "#") {
+                node.neighbors.push(n1);
+            }
+            var n2 = get_neighbor(i+1,j,graph);
+            if(n2 && n2.type !== "#") {
+                node.neighbors.push(n2);
+            }
+            var n3 = get_neighbor(i,j-1,graph);
+            if(n3 && n3.type !== "#") {
+                node.neighbors.push(n3);
+            }
+            var n4 = get_neighbor(i,j+1,graph);
+            if(n4 && n4.type !== "#") {
+                node.neighbors.push(n4);
+            }
+        }
+    }
+    
+    for(var a0 = 0; a0 < k; a0++){
+        var i1_temp = readLine().split(' ');
+        var i1 = parseInt(i1_temp[0]) - 1;
+        var j1 = parseInt(i1_temp[1]) - 1;
+        var i2 = parseInt(i1_temp[2]) - 1;
+        var j2 = parseInt(i1_temp[3]) - 1;
+        // Write Your Code Here
+        graph[i1][j1].tunnel.push(i2);
+        graph[i1][j1].tunnel.push(j2);
+        graph[i2][j2].tunnel.push(i1);
+        graph[i2][j2].tunnel.push(j1);
+    }
+    
+    let one_step_prob_map = create_simple_probability_map(graph);
+    // Write Your Code Here
+    var curr_pos = starting_pos;
+    var probability_maps = [[], []];
+    for(var i = 0; i < graph.length; i++) {
+        probability_maps[0].push([]);
+        probability_maps[1].push([]);
+        for(var j = 0; j < graph[i].length; j++) {
+            probability_maps[0][i].push(0);
+            probability_maps[1][i].push(0);
+            if(starting_pos[0] === i && starting_pos[1] === j) {
+                probability_maps[0][i][j] = 1;
+                probability_maps[1][i][j] = 1;
+            }
+        }
+    }
+    var current_prob_map = null;
+    var previous_prob_map = null;
+    var output_prob_map = create_multi(graph.length, graph[0].length);
+    let steps = 100000
+    for(var step = 0; step < steps; step++){
+        current_prob_map = probability_maps[step % 2];
+        previous_prob_map = probability_maps[(step+1) % 2];
+        for(var x = 0; x < graph.length; x++) {
+            for(var y = 0; y < graph[x].length; y++) {
+                let node = graph[x][y]
+                if(node.type === '#') continue;
+                if(node.type === '%' || node.type === '*') {
+                    current_prob_map[x][y] = previous_prob_map[x][y];
+                } else {
+                    current_prob_map[x][y] = 0;
+                }
+                for(var i = 0; i < node.neighbors.length; i++) {
+                    var neighbor = node.neighbors[i];
+                    var np = previous_prob_map[neighbor.x][neighbor.y];
+                    if(neighbor.tunnel.length > 0) {
+                        np = previous_prob_map[neighbor.tunnel[0]][neighbor.tunnel[1]];
+                    }
+                    current_prob_map[x][y] += np*one_step_prob_map[neighbor.x][neighbor.y];
+                }
+                output_prob_map[x][y] = current_prob_map[x][y];
+            }
+        }
+        var sum = 0
+        for(var x = 0; x < graph.length; x++) {
+            for(var y = 0; y < graph[x].length; y++) {
+                sum += output_prob_map[x][y];
+            }
+        }
+    }
+    var exit_prob = 0;
+    for(var i = 0; i < exits.length; i++) {
+        exit_prob += output_prob_map[exits[i][0]][exits[i][1]];
+    }
+    console.log(exit_prob)
+}
