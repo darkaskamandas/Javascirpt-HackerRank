@@ -1,0 +1,73 @@
+function processData(input) {
+    const data = input.split('\n').map(a => a.split(' ').map(a => parseInt(a)));
+    const totalAvailableSkills = data[0][0];
+    const totalWizards = data[0][1];
+    let knownSkills = data[1];    
+    let wizardListIdx = 2;
+    
+    for (let i = 0; i < totalWizards; i++) {
+        // Save an immutable copy of the knownSkills array, for simulations
+        const lists = {
+            a: data[wizardListIdx++],
+            b: data[wizardListIdx++]
+        };
+        const combinations = [];
+
+        let smallestList = 'a';
+        let largestList = 'b';
+        
+        lists.a.splice(0, 1);
+        lists.b.splice(0, 1);
+        
+        if (lists.a.length > lists.b.length) {
+            smallestList = 'b';
+            largestList = 'a';
+        }
+
+        for (let i = 0; i < lists[smallestList].length; i++) {
+            const comb = [];
+
+            for (let j = 0; j < lists[largestList].length; j++) {
+                comb.push([lists[smallestList][i], lists[largestList][j]])
+            }
+
+            combinations.push(comb);
+        }
+        
+        for (let i = 0; i < combinations.length; i++) {
+            const comboGroup = combinations[i];
+            let bestSkillSim = knownSkills.map(a => a);
+            let bestCombination = 0;
+
+            for (let j = 0; j < comboGroup.length; j++) {
+                const skillSim = knownSkills.map(a => a);
+                const skillIdx1 = comboGroup[j][0] - 1;
+                const skillIdx2 = comboGroup[j][1] - 1;
+                
+                if (skillSim[skillIdx1] > 0) {
+                    skillSim[skillIdx1]--;
+                    skillSim[skillIdx2]++;
+
+                    if (skillSim.filter(a => a > 0).length > bestSkillSim.filter(a => a > 0).length) {
+                        bestSkillSim = skillSim;
+                    }                    
+                }
+            }
+            
+            knownSkills = bestSkillSim;
+        }
+    }
+
+    console.log(knownSkills.filter(a => a > 0).length);
+}
+
+process.stdin.resume();
+process.stdin.setEncoding("ascii");
+_input = "";
+process.stdin.on("data", function (input) {
+    _input += input;
+});
+
+process.stdin.on("end", function () {
+   processData(_input);
+});

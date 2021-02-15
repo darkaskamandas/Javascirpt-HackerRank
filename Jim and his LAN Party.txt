@@ -1,0 +1,164 @@
+function processData(input) {
+    //Enter your code here
+    class LanParty {
+        constructor(input) {
+            this.gameCount = 0;
+            this.successWires = [];
+            this.changedMergeGameIds = [];
+            this.changedMergeIdCount = 0;
+            this._input = input;
+            this._currentWire = 0;
+            this.nets = [0]; // net ID or net for each player
+            this.playerPerGameCounts = [0];
+        }
+
+        _parseInput() {
+            const lines = this._input.split('\n');
+
+            const constants = this._parseNumbers(lines[0]);
+            this.playerCount = constants[0];
+            this.gameCount = constants[1];
+            this.wireCount = constants[2];
+
+            this.playerGames = this._parseNumbers(lines[1], 1);
+
+            this.wires = [];
+            for (let i = 0; i < this.wireCount; i++) {
+                this.wires.push(this._parseNumbers(lines[2 + i]));
+            }
+        }
+
+        _parseNumbers(line, startIndex = 0) {
+            const array = line.split(' ').map(x => parseInt(x));
+            return startIndex === 1 ? [0].concat(array) : array;
+        }
+
+        _prepareDataStructure() {
+            for (let p = 1; p <= this.playerCount; p++) {
+                this.nets[p] = p;
+            }
+
+            // NB: for n players, n-1 connections needed
+            for (let p = 1; p <= this.playerCount; p++) {
+                const gameId = this.playerGames[p];
+                const count = this.playerPerGameCounts[gameId];
+                if (count === undefined) {
+                    this.playerPerGameCounts[gameId] = 0;
+                } else {
+                    this.playerPerGameCounts[gameId] = count + 1;
+                }
+            }
+
+            this.successWires = new Array(this.gameCount + 1);
+            this.successWires[0] = -99; // first value never used
+            for (let g = 1; g <= this.gameCount; g++) {
+                // if more than 1 player in game, we need to connect (-1 if failed)
+                // otherwise we are ready to play from wire #0 (e.g. Test #3)
+                this.successWires[g] = this.playerPerGameCounts[g] >= 1 ? -1 : 0;
+            }
+        }
+
+        solveProblem() {
+            this._parseInput();
+            this._prepareDataStructure();
+
+            // Connect players with wires
+            for (let w = 0; w < this.wireCount; w++) {
+                const wire = this.wires[w];
+                const a = wire[0], b = wire[1];
+                this._connect(a, b, w + 1);
+            }
+            return this.successWires.slice(1);
+        }
+
+        _connect(p1, p2, wireIndex) {
+            this._currentWire = wireIndex;
+            const n1 = this.nets[p1];
+            const n2 = this.nets[p2];
+            if (n1 === n2) return; // already connected
+
+            const id1 = n1.id || n1;
+            const id2 = n2.id || n2;
+
+            // Merge groups, keep lowest ID for group ID of the whole
+
+            if (n2 === id2) { // n2 is an ID
+                if (n1 === id1) { // both an ID
+                    new Net(this, id1).add(id2);
+                } else { // n1 is a net
+                    n1.add(id2);
+                }
+            } else { // n2 is a net
+                if (n1 === id1) { // n1 is an ID
+                    n2.add(id1);
+                } else { // both are nets
+                    n1.merge(n2);
+                }
+            }
+        }
+
+        countConnectedPlayer(gameId) {
+            if (--this.playerPerGameCounts[gameId] === 0) {
+                this.successWires[gameId] = this._currentWire;
+            }
+        }
+    }
+
+    class Net {
+        constructor(solver, id) {
+            this.solver = solver;
+            this.id = id;
+            this.players = [id];
+            this.countMap = {}; // gameId => count
+
+            const gameId = this.solver.playerGames[id];
+            this.countMap[gameId] = 1;
+            this.solver.nets[id] = this;
+        }
+
+        add(id) {
+            this.players.push(id);
+            const gameId = this.solver.playerGames[id];
+            this._countGame(gameId);
+            this.solver.nets[id] = this;
+        }
+
+        _countGame(gameId) {
+            if (this.countMap[gameId]) {
+                this.solver.countConnectedPlayer(gameId);
+            } else {
+                this.countMap[gameId] = 1;
+            }
+        }
+
+        merge(n2) {
+            for (let gameId in n2.countMap) {
+                this._countGame(gameId);
+            }
+            const nets = this.solver.nets;
+            for (let i = 0; i < n2.players.length; i++) {
+                const id = n2.players[i];
+                this.players.push(id);
+                nets[id] = this;
+            }
+        }
+    }
+
+//---
+
+    const result = new LanParty(input).solveProblem();
+    for (let i = 0; i < result.length; i++) {
+        console.log(result[i]);
+    }
+} 
+
+process.stdin.resume();
+process.stdin.setEncoding("ascii");
+_input = "";
+process.stdin.on("data", function (input) {
+    _input += input;
+});
+
+process.stdin.on("end", function () {
+   processData(_input);
+});
