@@ -1,0 +1,82 @@
+function processData(input) {
+    //Enter your code here
+    var lines = input.trim().split('\n');
+	
+	var q = parseInt(lines[0]);
+	
+	var counter = 1;
+	var i = 0;
+	for (i = 0; i < q; i++) {
+		var a = lines[counter++].trim().split('');
+		var b = lines[counter++].trim().split('');
+		
+		var ai = 0, bi = 0;
+		var ok = true;
+		var last_ai = 0;
+		var s = [];
+		var uc;
+		for (bi = 0; bi < b.length; bi++) {
+			var found = false;
+			for (ai = last_ai; ai < a.length; ai++) {
+				if (a[ai] === b[bi]) {
+					found = true;
+					last_ai = ai + 1;
+					s.push(ai);
+					break;
+				}
+			}
+			if (found === false) {
+				for (ai = last_ai; ai < a.length; ai++) {
+					if (a[ai].toUpperCase() === b[bi]) {
+						a = a.map(_a => {
+							if (_a === a[ai]) {
+								return _a.toUpperCase();
+							}
+							return _a;
+						});
+						found = true;
+						last_ai = ai + 1;
+						s.push(ai);
+						break;
+					}
+				}
+				if (found === false) {
+					ok = false;
+					break;
+				}
+			}
+		}
+		if (ok) {
+			var k = 0;
+			for (ai = 0; ai < a.length; ai++) {
+				if (k < s.length && ai === s[k]) {
+					k++;
+					continue;
+				}
+				uc = a[ai].toUpperCase();
+				if (a[ai] === uc) {
+					ok = false;
+					break;
+				}
+			}
+			if (ok) {
+				console.log('YES');	
+			} else {
+				console.log('NO');
+			}
+		} else {
+			console.log('NO');	
+		}
+	}
+} 
+
+process.stdin.resume();
+process.stdin.setEncoding("ascii");
+_input = "";
+process.stdin.on("data", function (input) {
+    _input += input;
+});
+
+process.stdin.on("end", function () {
+   processData(_input);
+});

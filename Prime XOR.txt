@@ -1,0 +1,75 @@
+import java.io.*;
+import java.util.*;
+public class c {
+public static void main(String[] args) throws IOException {
+	input.init(System.in);
+	PrintWriter out = new PrintWriter(System.out);
+	int T = input.nextInt();
+	boolean[] ps = new boolean[10000];
+	Arrays.fill(ps, true);
+	ps[0] = ps[1] = false;
+	for(int i = 0; i<ps.length; i++)
+		if(ps[i])
+			for(int j = i*i; j<ps.length; j+=i)
+				ps[j] = false;
+	for(int t = 0; t<T; t++)
+	{
+		int n = input.nextInt();
+		int[] fs = new int[4501];
+		for(int i = 0; i<n; i++) fs[input.nextInt()]++;
+		long mod = (long)1e9+7;
+		long[] ways = new long[8197];
+		ways[0] = 1L;
+		for(int i = 3500; i<=4500;i++)
+		{
+			int same = fs[i]/2 + 1;
+			int diff = (fs[i]+1)/2;
+			long[] nways = new long[ways.length];
+			for(int j = 0; j<ways.length; j++)
+			{
+				if(ways[j] == 0) continue;
+				nways[j] = (nways[j] + (ways[j] * same)%mod)%mod;
+				nways[j^i] = (nways[j^i] + (ways[j] * diff)%mod)%mod;
+			}
+			ways = nways;
+		}
+		long res = 0;
+		for(int i = 0; i<ways.length; i++)
+		{
+			if(ps[i])
+				res = (res + ways[i])%mod;
+		}
+		out.println(res);
+	}
+	
+	out.close();
+}
+
+public static class input {
+	static BufferedReader reader;
+	static StringTokenizer tokenizer;
+
+	static void init(InputStream input) {
+		reader = new BufferedReader(new InputStreamReader(input));
+		tokenizer = new StringTokenizer("");
+	}
+
+	static String next() throws IOException {
+		while (!tokenizer.hasMoreTokens())
+			tokenizer = new StringTokenizer(reader.readLine());
+		return tokenizer.nextToken();
+	}
+
+	static int nextInt() throws IOException {
+		return Integer.parseInt(next());
+	}
+
+	static double nextDouble() throws IOException {
+		return Double.parseDouble(next());
+	}
+
+	static long nextLong() throws IOException {
+		return Long.parseLong(next());
+	}
+}
+}
