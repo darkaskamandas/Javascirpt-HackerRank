@@ -1,0 +1,33 @@
+'use strict';
+
+
+function processData(input) {
+    var MOD = 1000000000 + 7;
+    var parse_fun = function (s) { return parseInt(s, 10); };
+
+    var lines = input.split('\n');
+    var S = lines.shift().trim().split('').map(parse_fun);
+    var N = S.length;
+
+    var sum = 1;
+    var res = 0;
+    for (var i = N - 1; i >= 0; i--) {
+        var d = sum;
+        d *= i + 1; d %= MOD;
+        d *= S[i];
+        d %= MOD;
+        res += d;
+        res %= MOD;
+        sum *= 10;
+        sum++;
+        sum %= MOD;
+    }
+    console.log(res);
+}
+
+
+process.stdin.resume();
+process.stdin.setEncoding("ascii");
+var _input = "";
+process.stdin.on("data", function (input) { _input += input; });
+process.stdin.on("end", function () { processData(_input); });
