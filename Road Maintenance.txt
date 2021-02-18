@@ -1,0 +1,31 @@
+function processData(input) {
+    //Enter your code here
+    var inputArray = input.split(" ");
+    var numberOfCities;
+    var numberRoadsMaint;
+    for(var i=0; i < 2; i++){
+        if(i === 0){
+           numberOfCities = parseInt(inputArray[i]);
+        }
+        
+        if(i === 1){
+            numberRoadsMaint = parseInt(inputArray[i]);
+        }
+        //console.log(inputArray[i]);
+    }
+    var length = inputArray.length -2;
+    var roads = (length * numberRoadsMaint); 
+    var answer = roads % (Math.pow(10,9) + 7);   
+    console.log(answer);
+} 
+
+process.stdin.resume();
+process.stdin.setEncoding("ascii");
+_input = "";
+process.stdin.on("data", function (input) {
+    _input += input;
+});
+
+process.stdin.on("end", function () {
+   processData(_input);
+});

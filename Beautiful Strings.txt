@@ -1,0 +1,34 @@
+function processData(input) {
+    var last = "";
+    var prelast = "";
+    var groups = 0;
+    var groupSize = 0;
+    var group2 = 0;
+    for(var i=0,n=input.length;i<n;i++){
+        var ch = input.charAt(i);
+        if (ch !== last) {
+            groups++;
+            if (groupSize > 1) group2++;
+            else if (ch == prelast) group2--;
+            prelast = last;
+            last = ch;
+            groupSize = 1;
+        } else {
+            groupSize++;
+        }
+    }
+    if (groupSize > 1) group2++;
+    console.log(group2 + groups * (groups - 1) / 2);
+    
+} 
+
+process.stdin.resume();
+process.stdin.setEncoding("ascii");
+_input = "";
+process.stdin.on("data", function (input) {
+    _input += input;
+});
+
+process.stdin.on("end", function () {
+   processData(_input);
+});
