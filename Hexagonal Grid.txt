@@ -1,0 +1,53 @@
+'use strict';
+
+
+function processData(input) {
+    var parse_fun = function (s) { return parseInt(s, 10); };
+
+    var lines = input.split('\n');
+    var T = parse_fun(lines.shift());
+
+    var res = [];
+    for (var t = 0; t < T; t++) {
+        var N = parse_fun(lines[3 * t]);
+        var L1 = lines[3 * t + 1].split('').splice(0, N);
+        var L2 = lines[3 * t + 2].split('').splice(0, N);
+        var count1 = 0;
+        for (var i = 0; i < N; i++) {
+            if (L1[i] == '1') { count1++; }
+            if (L2[i] == '1') { count1++; }
+        }
+        if (count1 % 2 == 1) { res.push('NO'); continue; }
+
+        var start = 0;
+        for (var i = 0; i < N; i++) {
+            if (L1[i] == '1' && L2[i] == '1') {
+                if (start > 0) { break; } else { continue; }
+            }
+            if (L1[i] == '1') {
+                start = 1 - start;
+                continue;
+            }
+            if (L2[i] == '1') {
+                if (start == 1) {
+                    start = 0;
+                    continue;
+                }
+                start = 1;
+                if (i < N - 1 && L1[i + 1] == '1') {
+                    break;
+                }
+            }
+        }
+        res.push(start == 0 ? 'YES' : 'NO');
+    }
+
+    console.log(res.join('\n'));
+}
+
+
+process.stdin.resume();
+process.stdin.setEncoding("ascii");
+var _input = "";
+process.stdin.on("data", function (input) { _input += input; });
+process.stdin.on("end", function () { processData(_input); });
